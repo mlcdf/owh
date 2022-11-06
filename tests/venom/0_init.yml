@@ -1,0 +1,13 @@
+name: initialize venom tests
+testcases:
+- name: build owh
+  steps:
+  - type: exec
+    script: |
+      cd ../..
+      go build -o {{.owh}} .
+
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldEqual ""
+    - result.systemerr ShouldEqual ""

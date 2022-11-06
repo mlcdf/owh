@@ -1,0 +1,10 @@
+name: deploy
+testcases:
+- name: deploy
+  steps:
+  - script: OWH_HOSTING="lhudfzo.cluster031.hosting.ovh.net" OWH_CANONICAL_DOMAIN="test.mlcdf.fr" {{.owh}} deploy --dir tests/test-project
+    type: exec
+    assertions:
+    - result.code ShouldEqual 1
+    - "result.systemout ShouldContainSubstring Please set a hosting via the --hosting flag or by running: owh hosting myhosting"
+    - result.systemerr ShouldEqual ""

@@ -1,0 +1,17 @@
+name: domain:list
+testcases:
+- name: list without hosting
+  steps:
+  - script: "{{.owh}} domains:list"
+    type: exec
+    assertions:
+    - result.code ShouldEqual 1
+    - "result.systemout ShouldContainSubstring Please set a hosting via the --hosting flag or by running: owh hosting myhosting"
+    - result.systemerr ShouldEqual ""
+
+- name: domain:list with hosting
+  steps:
+  - script: "{{.owh}} domains:list --hosting lhudfzo.cluster031.hosting.ovh.net"
+    type: exec
+    assertions:
+    - result.code ShouldEqual 0
