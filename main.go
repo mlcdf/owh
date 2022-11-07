@@ -175,6 +175,13 @@ func main() {
 			},
 		},
 		{
+			Name:  "open",
+			Usage: "Open browser to current deployed website",
+			Action: func(cCtx *cli.Context) error {
+				return commands.Open()
+			},
+		},
+		{
 			Name:  "users:list",
 			Usage: "List ssh/ftp users",
 			Flags: []cli.Flag{
