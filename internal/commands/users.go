@@ -16,11 +16,9 @@ func Users(client *api.Client, hosting string) error {
 	if hosting == "" {
 		link, err := config.EnsureLink()
 		if err != nil {
-			if err != config.ErrFolderNotLinked {
-				return err
-			}
-			fmt.Println("Folder not link. Please run: owh link first")
+			return err
 		}
+
 		hosting = link.Hosting
 	}
 
@@ -54,11 +52,9 @@ func DeleteUser(client *api.Client, hosting string, user string) error {
 	if hosting == "" {
 		link, err := config.EnsureLink()
 		if err != nil {
-			if err != config.ErrFolderNotLinked {
-				return err
-			}
-			fmt.Println("Folder not link. Please run: owh link first")
+			return err
 		}
+
 		hosting = link.Hosting
 	}
 
@@ -112,27 +108,29 @@ func DeleteUser(client *api.Client, hosting string, user string) error {
 	return nil
 }
 
-func ResetPassword(client *api.Client, hosting string, user string) error {
+func ChangePassword(client *api.Client, hosting string, user string, password string) error {
 	if hosting == "" {
 		link, err := config.EnsureLink()
 		if err != nil {
-			if err != config.ErrFolderNotLinked {
-				return err
-			}
-			fmt.Println("Folder not link. Please run: owh link first")
+			return err
 		}
 		hosting = link.Hosting
+	}
+
+	if password == "" && !cmdutil.IsInteractive() {
+		fmt.Println("missing flag --password")
+		return cmdutil.ErrFlag
 	}
 
 	if user == "" {
 		if credential, ok := config.GlobalOpts.SFTPCredentials[hosting]; ok {
 			user = credential.User
-			fmt.Printf("Changing passwod for user %s\n", cmdutil.Color(cmdutil.StyleHighlight).Render(user))
+			fmt.Printf("Changing password for user %s\n", cmdutil.Color(cmdutil.StyleHighlight).Render(user))
 		} else {
 			fmt.Println("Missing positional argument user")
 			return cmdutil.ErrSilent
 		}
 	}
 
-	return flow.ChangePassword(client, hosting, user)
+	return flow.ChangePassword(client, hosting, user, password)
 }

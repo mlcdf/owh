@@ -1,9 +1,11 @@
 package cmdutil
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/mattn/go-isatty"
+	"github.com/olekukonko/tablewriter"
 	"golang.org/x/xerrors"
 
 	"github.com/charmbracelet/lipgloss"
@@ -40,4 +42,37 @@ func Highlight(str string) string {
 
 func Special(str string) string {
 	return lipgloss.NewStyle().Foreground(StyleSpecial).Render(str)
+}
+
+// Table renders the table defined by the given properties into w. Both title &
+// cols are optional.
+func Table(title string, rows [][]string, cols ...string) error {
+	if title != "" {
+		fmt.Println(lipgloss.NewStyle().Bold(true).Render(title))
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+
+	if len(cols) > 0 {
+		table.SetHeader(cols)
+	}
+
+	table.SetBorder(false)
+	table.SetHeaderLine(false)
+	table.SetAutoWrapText(false)
+	table.SetAutoFormatHeaders(true)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetColumnSeparator(" ")
+	table.SetNoWhiteSpace(true)
+	table.SetTablePadding("\t")
+
+	// table.SetColumnAlignment([]int{tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT})
+	table.AppendBulk(rows)
+
+	table.Render()
+
+	fmt.Println()
+
+	return nil
 }

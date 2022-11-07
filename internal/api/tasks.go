@@ -103,7 +103,7 @@ func (client *Client) WaitTaskDone(hosting string, id int64) error {
 		}
 
 		if time.Since(t) > 3*time.Minute {
-			fmt.Printf("timed out waiting (3 minutes) for ssh user creation (task_id: %d)\n", id)
+			fmt.Printf("timed out waiting (3 minutes) for %s task completion (task_id: %d)\n", task.Function, id)
 			return cmdutil.ErrSilent
 		}
 	}

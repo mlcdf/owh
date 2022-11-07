@@ -1,20 +1,30 @@
 package commands
 
 import (
-	"fmt"
-	"strings"
-
 	"go.mlcdf.fr/owh/internal/api"
-	"golang.org/x/xerrors"
+	"go.mlcdf.fr/owh/internal/cmdutil"
 )
 
 func Hosting(client *api.Client, hosting string) error {
-	var webs []string
-	err := client.Get("/hosting/web", &webs)
+	hostings, err := client.Hostings()
 	if err != nil {
-		return xerrors.Errorf("failed to get /hosting/web: %w", err)
+		return err
 	}
 
-	fmt.Println(strings.Join(webs, "\n"))
-	return nil
+	tables := make([][]string, 0)
+
+	for _, hosting := range hostings {
+		row := []string{
+			hosting.ServiceName,
+			hosting.DisplayName,
+			hosting.State,
+			hosting.HostingIp,
+			hosting.HostingIpv6,
+			hosting.QuotaUsed.String(),
+			hosting.QuotaSize.String(),
+		}
+		tables = append(tables, row)
+	}
+
+	return cmdutil.Table("", tables, "Name", "Display Name", "State", "IPv4", "IPv6", "Disk used", "Disk available")
 }

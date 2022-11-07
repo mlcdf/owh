@@ -20,22 +20,14 @@ func AttachDomain(client *api.Client, hosting string, domain string, www bool) (
 		}
 	}
 
-	suggestedDomain := suggestDomain(domain)
-
-	if !www {
-		prompt2 := &survey.Confirm{Message: fmt.Sprintf("Would you like to also attach domain %s", suggestedDomain)}
-		err := survey.AskOne(prompt2, &www)
-		if err != nil {
-			return "", err
-		}
-	}
-
 	err := attachDomain(client, hosting, domain, domain)
 	if err != nil {
 		return "", err
 	}
 
 	if www {
+		suggestedDomain := suggestDomain(domain)
+
 		err = attachDomain(client, hosting, suggestedDomain, domain)
 		if err != nil {
 			return "", err

@@ -1,11 +1,8 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
 	"io"
-	"os"
-	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ovh/go-ovh/ovh"
@@ -72,7 +69,7 @@ func Login() error {
 	}
 
 	config.GlobalOpts.ConsumerKey = response.ConsumerKey
-	err = config.Save(config.GlobalOpts)
+	err = config.GlobalOpts.Save()
 	if err != nil {
 		return err
 	}
@@ -82,43 +79,6 @@ func Login() error {
 		return err
 	}
 
-	err = gitignore()
-	if err != nil {
-		return err
-	}
-
 	fmt.Printf("Logged in as %s %s (%s)\n", me.FirstName, me.Name, me.NicHandle)
-	return nil
-}
-
-func gitignore() error {
-	f, err := os.Open(".gitignore")
-	if err != nil {
-		return err
-	}
-
-	lines := []string{}
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), ".owh.json") {
-			return nil
-		}
-
-		lines = append(lines, scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	f.Close()
-
-	lines = append(lines, "\n.owh.json")
-
-	err = os.WriteFile(".gitignore", []byte(strings.Join(lines, "\n")), 06400)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }

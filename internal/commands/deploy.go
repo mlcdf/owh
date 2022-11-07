@@ -24,7 +24,7 @@ type DeployOptions struct {
 }
 
 func Deploy(client *api.Client, options *DeployOptions) error {
-	l, err := config.EnsureLink()
+	l, err := config.NewLink()
 
 	if err != nil {
 		if err != config.ErrFolderNotLinked {
@@ -37,7 +37,7 @@ func Deploy(client *api.Client, options *DeployOptions) error {
 		}
 
 		prompt := &survey.Confirm{
-			Message: fmt.Sprintf("Set up and deploy %s", path),
+			Message: fmt.Sprintf("No link found. Set up and deploy %s", path),
 			Default: true,
 		}
 		var shouldContinue bool
@@ -50,7 +50,7 @@ func Deploy(client *api.Client, options *DeployOptions) error {
 			return cmdutil.ErrCancel
 		}
 
-		err = flow.LinkFolder(client, l)
+		err = flow.LinkDirectory(client, l)
 		if err != nil {
 			return err
 		}

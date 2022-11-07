@@ -52,6 +52,10 @@ func New() error {
 	return nil
 }
 
+func (opts *globalOptions) Save() error {
+	return save(opts)
+}
+
 func (opts *globalOptions) Validate() error {
 	if opts.Region == "" || opts.ConsumerKey == "" {
 		if ci := os.Getenv("CI"); ci != "" {
@@ -88,27 +92,26 @@ func fromEnv(opts *globalOptions) {
 func fromFile[Options *globalOptions | *Link](opts Options, location string) error {
 	if _, err := os.Stat(location); os.IsNotExist(err) {
 		logging.Debugf("Config file %s does not exist", location)
-	} else {
-		logging.Debugf("Config file found at %s", location)
-		fh, err := os.Open(location)
-		if err != nil {
-			return err
-		}
-		defer fh.Close()
+		return nil
+	}
+	logging.Debugf("Config file found at %s", location)
 
-		decoder := json.NewDecoder(fh)
-		if err := decoder.Decode(&opts); err != nil {
-			fmt.Printf("Folder link is invalid %s. Try to remove it and run: owh login", cmdutil.Color(cmdutil.StyleHighlight).Render(location))
-			return cmdutil.ErrSilent
-		}
-
+	fh, err := os.Open(location)
+	if err != nil {
+		return err
 	}
 
-	logging.Debugf("%v", opts)
+	defer fh.Close()
+
+	decoder := json.NewDecoder(fh)
+	if err := decoder.Decode(&opts); err != nil {
+		fmt.Printf("Folder link is invalid %s. Try to remove it and run: owh login", cmdutil.Color(cmdutil.StyleHighlight).Render(location))
+		return cmdutil.ErrSilent
+	}
 	return nil
 }
 
-func Save[Options *globalOptions | *Link](opts Options) error {
+func save[Options *globalOptions | *Link](opts Options) error {
 	var location string
 	// begin ugly
 	// I'm waiting for https://github.com/golang/go/issues/45380

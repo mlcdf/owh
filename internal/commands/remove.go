@@ -17,11 +17,9 @@ func Remove(client *api.Client, hosting string, domain string) error {
 	if hosting == "" && domain == "" {
 		link, err := config.EnsureLink()
 		if err != nil {
-			if err != config.ErrFolderNotLinked {
-				return err
-			}
-			fmt.Println("Folder not link. Please run: owh link first")
+			return err
 		}
+
 		hosting = link.Hosting
 		domain = link.CanonicalDomain
 	}

@@ -80,7 +80,7 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 				return nil, err
 			}
 
-			err = ChangePassword(client, hosting, user)
+			err = ChangePassword(client, hosting, user, "")
 			if err != nil {
 				return nil, err
 			}
@@ -103,9 +103,16 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 	addr := fmt.Sprintf("%s:%d", hostingInfo.ServiceManagementAccess.SSH.URL, hostingInfo.ServiceManagementAccess.SSH.Port)
 	logging.Debugf("ssh %s -l %s (passwd: %s)", strings.ReplaceAll(addr, ":22", ""), credentials.User, credentials.Password)
 
-	conn, err := ssh.Dial("tcp", addr, &config)
+	var conn *ssh.Client
+
+	conn, err = ssh.Dial("tcp", addr, &config)
 	if err != nil {
-		return nil, xerrors.Errorf("failed to connect to [%s]: %w\n", addr, err)
+		time.Sleep(5 * time.Second)
+
+		conn, err = ssh.Dial("tcp", addr, &config)
+		if err != nil {
+			return nil, xerrors.Errorf("failed to connect to [%s]: %w\n", addr, err)
+		}
 	}
 
 	return conn, nil
@@ -147,7 +154,7 @@ func createSSHUser(client *api.Client, primaryLogin string, hosting string) (*co
 	credentials := &config.Credentials{User: login, Password: password}
 	config.GlobalOpts.SFTPCredentials[hosting] = credentials
 
-	return credentials, config.Save(config.GlobalOpts)
+	return credentials, config.GlobalOpts.Save()
 }
 
 func GenPassword() string {
@@ -155,7 +162,7 @@ func GenPassword() string {
 	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
 		"abcdefghijklmnopqrstuvwxyz" +
 		"0123456789")
-	length := 20
+	length := 19
 
 	var b strings.Builder
 	for i := 0; i < length; i++ {
@@ -186,50 +193,40 @@ func validatePassword(password string) bool {
 	return true
 }
 
-func ChangePassword(client *api.Client, hosting string, user string) error {
-	if user == "" {
-		if credential, ok := config.GlobalOpts.SFTPCredentials[hosting]; ok {
-			user = credential.User
-		} else {
-			fmt.Println("Missing positional argument user")
+func ChangePassword(client *api.Client, hosting string, user string, password string) error {
+	if password == "" {
+
+		prompt := &survey.Input{
+			Message: "Password (alphanumeric characters only, leave blank to use an auto-generated password)",
+		}
+
+		err := survey.AskOne(
+			prompt,
+			&password,
+			survey.WithValidator(survey.MaxLength(20)),
+		)
+
+		if err != nil {
+			return err
+		}
+
+		if password == "" {
+			password = GenPassword()
+		}
+
+		if !validatePassword(password) {
+			fmt.Printf("Invalid password format %s\n", cmdutil.Color(cmdutil.StyleHighlight).Render(password))
 			return cmdutil.ErrSilent
 		}
 	}
 
-	var input string
-	defaultInput := "leave blank to use an auto-generated password"
-
-	prompt := &survey.Input{
-		Message: "Password (alphanumeric characters only)",
-		Default: defaultInput,
-	}
-
-	err := survey.AskOne(
-		prompt,
-		&input,
-		survey.WithValidator(survey.MaxLength(20)),
-	)
-
+	err := client.ChangePassword(hosting, user, password)
 	if err != nil {
 		return err
 	}
 
-	if input == defaultInput {
-		input = GenPassword()
-	}
-
-	if !validatePassword(input) {
-		fmt.Printf("Invalid password format %s\n", cmdutil.Color(cmdutil.StyleHighlight).Render(input))
-		return cmdutil.ErrSilent
-	}
-
-	err = client.ChangePassword(hosting, user, input)
-	if err != nil {
-		return err
-	}
-
-	config.GlobalOpts.SFTPCredentials[hosting].Password = input
-	err = config.Save(config.GlobalOpts)
+	config.GlobalOpts.SFTPCredentials[hosting] = &config.Credentials{User: user, Password: password}
+	err = config.GlobalOpts.Save()
 	if err != nil {
 		return err
 	}

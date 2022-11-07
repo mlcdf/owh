@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/alitto/pond"
@@ -9,12 +10,25 @@ import (
 	"golang.org/x/xerrors"
 )
 
+var NotHostingFound = errors.New("Not hosting found")
+var MoreThanOneHostingFound = errors.New("More than one hosting found")
+
 type UnitValue struct {
 	Unit  string  `json:"unit"`
 	Value float32 `json:"value"`
 }
 
+func (uv *UnitValue) String() string {
+	return fmt.Sprintf("%.1f %s", uv.Value, uv.Unit)
+}
+
 type HostingInfo struct {
+	ServiceName             string `json:"serviceName"`
+	DisplayName             string `json:"displayName"`
+	HasCDN                  bool   `json:"hasCdn"`
+	HostingIp               string `json:"hostingIp"`
+	HostingIpv6             string `json:"hostingIpv6"`
+	State                   string `json:"state"`
 	PrimaryLogin            string `json:"primaryLogin"`
 	ServiceManagementAccess struct {
 		SSH struct {
@@ -48,6 +62,64 @@ func (client *Client) ListHostings() ([]string, error) {
 		return nil, xerrors.Errorf("failed to get /hosting/web: %w", err)
 	}
 	return webs, nil
+}
+
+func (client *Client) HostingByDomain(domain string) (string, error) {
+	var hostings []string
+	url := fmt.Sprintf("/hosting/web/attachedDomains?domain=%s", domain)
+
+	err := client.Get(url, &hostings)
+	if err != nil {
+		return "", xerrors.Errorf("failed to get %s: %w", url, err)
+	}
+
+	if len(hostings) == 0 {
+		return "", NotHostingFound
+	}
+
+	if len(hostings) > 1 {
+		return "", MoreThanOneHostingFound
+	}
+
+	return hostings[0], nil
+}
+
+func (client *Client) Hostings() ([]HostingInfo, error) {
+	hostings, err := client.ListHostings()
+	if err != nil {
+		return nil, err
+	}
+
+	var hs []HostingInfo
+	pool := pond.New(20, 20)
+	defer pool.StopAndWait()
+
+	// Create a task group associated to a context
+	group, _ := pool.GroupContext(context.Background())
+
+	for _, hosting := range hostings {
+		url := fmt.Sprintf("/hosting/web/%s", hosting)
+
+		group.Submit(func() error {
+			var d HostingInfo
+			err := client.Get(url, &d)
+			if err != nil {
+				return err
+			}
+
+			hs = append(hs, d)
+
+			return nil
+		})
+	}
+
+	// Wait for all HTTP requests to complete.
+	err = group.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	return hs, nil
 }
 
 func (client *Client) ListDomains(hosting string) ([]string, error) {

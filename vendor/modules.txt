@@ -46,6 +46,9 @@ github.com/muesli/reflow/wrap
 # github.com/muesli/termenv v0.11.1-0.20220204035834-5ac8409525e0
 ## explicit; go 1.13
 github.com/muesli/termenv
+# github.com/olekukonko/tablewriter v0.0.5
+## explicit; go 1.12
+github.com/olekukonko/tablewriter
 # github.com/ovh/go-ovh v1.3.0
 ## explicit; go 1.12
 github.com/ovh/go-ovh/ovh

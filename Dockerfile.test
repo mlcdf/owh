@@ -1,0 +1,8 @@
+FROM golang:1.19.3-bullseye
+
+RUN go run github.com/ovh/venom/cmd/venom@v1.0.1 version
+
+RUN mkdir /app
+WORKDIR /app
+
+CMD go run github.com/ovh/venom/cmd/venom@v1.0.1 run $(find /app/tests/venom ! -path '*vars*' -type f -name '*.yml' | sort)

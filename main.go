@@ -42,9 +42,8 @@ func main() {
 			},
 		},
 		{
-			Name:    "hosting:list",
-			Aliases: []string{"hl"},
-			Usage:   "List all the hostings",
+			Name:  "hostings",
+			Usage: "List all your hostings",
 			Action: func(cCtx *cli.Context) error {
 				var hosting string
 
@@ -66,9 +65,8 @@ func main() {
 			},
 		},
 		{
-			Name:    "domains:list",
-			Aliases: []string{"dl"},
-			Usage:   "List attached domains",
+			Name:  "domains",
+			Usage: "List domains attached to a hosting",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        "hosting",
@@ -99,6 +97,17 @@ func main() {
 					Usage:       "hosting",
 					Destination: new(string),
 				},
+				&cli.StringFlag{
+					Name:        "domain",
+					Usage:       "domain",
+					Destination: new(string),
+				},
+				&cli.BoolFlag{
+					Name:        "www",
+					Usage:       "Also attach www/non-www domain",
+					Destination: new(bool),
+					Value:       false,
+				},
 			},
 			Action: func(cCtx *cli.Context) error {
 				err := config.GlobalOpts.Validate()
@@ -111,7 +120,7 @@ func main() {
 					return err
 				}
 
-				return commands.AttachDomain(client, cCtx.String("hosting"), cCtx.Args().First())
+				return commands.AttachDomain(client, cCtx.String("hosting"), cCtx.String("domain"))
 			},
 		},
 		{
@@ -123,6 +132,17 @@ func main() {
 					Usage:       "hosting",
 					Destination: new(string),
 				},
+				&cli.StringFlag{
+					Name:        "domain",
+					Usage:       "domain",
+					Destination: new(string),
+				},
+				&cli.BoolFlag{
+					Name:        "www",
+					Usage:       "Also detach www/non-www domain",
+					Destination: new(bool),
+					Value:       false,
+				},
 			},
 			Action: func(cCtx *cli.Context) error {
 				err := config.GlobalOpts.Validate()
@@ -135,12 +155,12 @@ func main() {
 					return err
 				}
 
-				return commands.DetachDomain(client, cCtx.String("hosting"), cCtx.Args().First())
+				return commands.DetachDomain(client, cCtx.String("hosting"), cCtx.String("domain"))
 			},
 		},
 		{
 			Name:  "deploy",
-			Usage: "Deploy the content of a folder to a website",
+			Usage: "Deploy websites from a directory",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        "dir",
@@ -150,7 +170,7 @@ func main() {
 				},
 				&cli.BoolFlag{
 					Name:        "www",
-					Usage:       "www",
+					Usage:       "Also attach www/non-www domain",
 					Destination: new(bool),
 					Value:       false,
 				},
@@ -175,6 +195,35 @@ func main() {
 			},
 		},
 		{
+			Name:  "link",
+			Usage: "Link current directory to an existing website on OVHcloud",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "hosting",
+					Usage:       "hosting",
+					Destination: new(string),
+				},
+				&cli.StringFlag{
+					Name:        "domain",
+					Usage:       "domain",
+					Destination: new(string),
+				},
+			},
+			Action: func(cCtx *cli.Context) error {
+				err := config.GlobalOpts.Validate()
+				if err != nil {
+					return err
+				}
+
+				client, err := api.NewClient(config.GlobalOpts.Region)
+				if err != nil {
+					return err
+				}
+
+				return commands.Link(client, cCtx.String("hosting"), cCtx.String("domain"))
+			},
+		},
+		{
 			Name:  "open",
 			Usage: "Open browser to current deployed website",
 			Action: func(cCtx *cli.Context) error {
@@ -182,7 +231,7 @@ func main() {
 			},
 		},
 		{
-			Name:  "users:list",
+			Name:  "users",
 			Usage: "List ssh/ftp users",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -206,12 +255,22 @@ func main() {
 			},
 		},
 		{
-			Name:  "users:changepw",
-			Usage: "Change ssh/ftp user password",
+			Name:  "users:changepass",
+			Usage: "Change ssh/ftp users password",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        "hosting",
 					Usage:       "hosting",
+					Destination: new(string),
+				},
+				&cli.StringFlag{
+					Name:        "user",
+					Usage:       "user",
+					Destination: new(string),
+				},
+				&cli.StringFlag{
+					Name:        "password",
+					Usage:       "password",
 					Destination: new(string),
 				},
 			},
@@ -226,7 +285,7 @@ func main() {
 					return err
 				}
 
-				return commands.ResetPassword(client, cCtx.String("hosting"), cCtx.String("user"))
+				return commands.ChangePassword(client, cCtx.String("hosting"), cCtx.String("user"), cCtx.String("password"))
 			},
 		},
 		{
@@ -256,7 +315,7 @@ func main() {
 		{
 			Name:    "remove",
 			Aliases: []string{"rm"},
-			Usage:   "Remove a website (files & attached domains)",
+			Usage:   "Remove websites (files & attached domains)",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        "hosting",
@@ -279,9 +338,8 @@ func main() {
 			},
 		},
 		{
-			Name:    "tasks:list",
-			Aliases: []string{"tasks"},
-			Usage:   "List attached tasks",
+			Name:  "tasks",
+			Usage: "List tasks",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        "hosting",
@@ -333,7 +391,7 @@ func main() {
 	app.ExitErrHandler = func(cCtx *cli.Context, err error) {
 		if err == nil {
 			os.Exit(0)
-		} else if err == cmdutil.ErrSilent {
+		} else if err == cmdutil.ErrSilent || err == config.ErrFolderNotLinked || err == cmdutil.ErrFlag {
 			os.Exit(1)
 		} else if err == cmdutil.ErrCancel {
 			os.Exit(2)
