@@ -197,10 +197,11 @@ func ChangePassword(client *api.Client, hosting string, user string) error {
 	}
 
 	var input string
+	defaultInput := "leave blank to use an auto-generated password"
+
 	prompt := &survey.Input{
 		Message: "Password (alphanumeric characters only)",
-		Default: "random",
-		Help:    "If empty, we'll generate a random password for you",
+		Default: defaultInput,
 	}
 
 	err := survey.AskOne(
@@ -208,11 +209,12 @@ func ChangePassword(client *api.Client, hosting string, user string) error {
 		&input,
 		survey.WithValidator(survey.MaxLength(20)),
 	)
+
 	if err != nil {
 		return err
 	}
 
-	if input == "random" {
+	if input == defaultInput {
 		input = GenPassword()
 	}
 

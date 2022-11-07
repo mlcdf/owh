@@ -140,7 +140,7 @@ func main() {
 		},
 		{
 			Name:  "deploy",
-			Usage: "Deploy the content of a folder to a site",
+			Usage: "Deploy the content of a folder to a website",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        "dir",
@@ -249,7 +249,7 @@ func main() {
 		{
 			Name:    "remove",
 			Aliases: []string{"rm"},
-			Usage:   "Remove a deployment (files & attached domains)",
+			Usage:   "Remove a website (files & attached domains)",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        "hosting",
