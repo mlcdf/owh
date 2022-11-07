@@ -87,7 +87,7 @@ func Login() error {
 		return err
 	}
 
-	fmt.Printf("Logged in as %s %s (%s)", me.FirstName, me.Name, me.NicHandle)
+	fmt.Printf("Logged in as %s %s (%s)\n", me.FirstName, me.Name, me.NicHandle)
 	return nil
 }
 

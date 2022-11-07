@@ -98,7 +98,7 @@ func fromFile[Options *globalOptions | *Link](opts Options, location string) err
 
 		decoder := json.NewDecoder(fh)
 		if err := decoder.Decode(&opts); err != nil {
-			fmt.Printf("Folder link is invalid. %s. Try to remove it and run: owh login", cmdutil.Color(cmdutil.StyleHighlight).Render(location))
+			fmt.Printf("Folder link is invalid %s. Try to remove it and run: owh login", cmdutil.Color(cmdutil.StyleHighlight).Render(location))
 			return cmdutil.ErrSilent
 		}
 
@@ -132,11 +132,10 @@ func Save[Options *globalOptions | *Link](opts Options) error {
 			return err
 		}
 
-		fh, err := os.Create(location)
+		fh, err = os.Create(location)
 		if err != nil {
 			return err
 		}
-		defer fh.Close()
 	} else {
 		fh, err = os.OpenFile(location, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
@@ -144,12 +143,16 @@ func Save[Options *globalOptions | *Link](opts Options) error {
 		}
 	}
 
-	encoder := json.NewEncoder(fh)
-	encoder.SetIndent("", "  ")
+	defer fh.Close()
 
-	err := encoder.Encode(opts)
+	bytes, err := json.MarshalIndent(&opts, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to encode json: %s", err)
+		return fmt.Errorf("failed to encode json: %w", err)
+	}
+
+	_, err = fh.Write(bytes)
+	if err != nil {
+		return fmt.Errorf("failed to write to file %s: %w", location, err)
 	}
 
 	logging.Infof("config saved")
