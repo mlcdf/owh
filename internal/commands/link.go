@@ -55,6 +55,6 @@ func Link(client *api.Client, hosting string, domain string) error {
 		return err
 	}
 
-	fmt.Printf("Current directory linked to hosting %s and domain %s on OVHcloud\n", cmdutil.Highlight(hosting), cmdutil.Highlight(domain))
+	fmt.Printf("Linked to hosting %s and domain %s on OVHcloud (created .owh.json and added it to .gitignore)\n", cmdutil.Highlight(hosting), cmdutil.Highlight(domain))
 	return nil
 }

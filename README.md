@@ -30,7 +30,7 @@ COMMANDS:
    domains:attach    Attach a domain
    domains:detach    Detach a domain
    hostings          List all your hostings
-   info              Show Info about the linked website
+   info              Show info about the linked website
    link              Link current directory to an existing website on OVHcloud
    login             Login to your OVHcloud account
    open              Open browser to current deployed website
