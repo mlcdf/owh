@@ -35,20 +35,26 @@ func main() {
 	}
 	app.Commands = []*cli.Command{
 		{
-			Name:  "login",
-			Usage: "Login to your OVHcloud account",
-			Action: func(cCtx *cli.Context) error {
-				return commands.Login()
+			Name:  "deploy",
+			Usage: "Deploy websites from a directory",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "dir",
+					Usage:       "dir",
+					Destination: new(string),
+					Value:       ".",
+				},
+				&cli.BoolFlag{
+					Name:        "www",
+					Usage:       "Also attach www/non-www domain",
+					Destination: new(bool),
+					Value:       false,
+				},
 			},
-		},
-		{
-			Name:  "hostings",
-			Usage: "List all your hostings",
 			Action: func(cCtx *cli.Context) error {
-				var hosting string
-
-				if cCtx.Args().Len() == 1 {
-					hosting = cCtx.Args().First()
+				options := &commands.DeployOptions{
+					Directory: cCtx.String("dir"),
+					WWW:       cCtx.Bool("www"),
 				}
 
 				err := config.GlobalOpts.Validate()
@@ -61,7 +67,7 @@ func main() {
 					return err
 				}
 
-				return commands.Hosting(client, hosting)
+				return commands.Deploy(client, options)
 			},
 		},
 		{
@@ -159,26 +165,13 @@ func main() {
 			},
 		},
 		{
-			Name:  "deploy",
-			Usage: "Deploy websites from a directory",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "dir",
-					Usage:       "dir",
-					Destination: new(string),
-					Value:       ".",
-				},
-				&cli.BoolFlag{
-					Name:        "www",
-					Usage:       "Also attach www/non-www domain",
-					Destination: new(bool),
-					Value:       false,
-				},
-			},
+			Name:  "hostings",
+			Usage: "List all your hostings",
 			Action: func(cCtx *cli.Context) error {
-				options := &commands.DeployOptions{
-					Directory: cCtx.String("dir"),
-					WWW:       cCtx.Bool("www"),
+				var hosting string
+
+				if cCtx.Args().Len() == 1 {
+					hosting = cCtx.Args().First()
 				}
 
 				err := config.GlobalOpts.Validate()
@@ -191,7 +184,7 @@ func main() {
 					return err
 				}
 
-				return commands.Deploy(client, options)
+				return commands.Hosting(client, hosting)
 			},
 		},
 		{
@@ -224,10 +217,66 @@ func main() {
 			},
 		},
 		{
+			Name:  "login",
+			Usage: "Login to your OVHcloud account",
+			Action: func(cCtx *cli.Context) error {
+				return commands.Login()
+			},
+		},
+		{
 			Name:  "open",
 			Usage: "Open browser to current deployed website",
 			Action: func(cCtx *cli.Context) error {
 				return commands.Open()
+			},
+		},
+		{
+			Name:    "remove",
+			Aliases: []string{"rm"},
+			Usage:   "Remove websites (files & attached domains)",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "hosting",
+					Usage:       "hosting",
+					Destination: new(string),
+				},
+			},
+			Action: func(cCtx *cli.Context) error {
+				err := config.GlobalOpts.Validate()
+				if err != nil {
+					return err
+				}
+
+				client, err := api.NewClient(config.GlobalOpts.Region)
+				if err != nil {
+					return err
+				}
+
+				return commands.Remove(client, cCtx.String("hosting"), cCtx.Args().First())
+			},
+		},
+		{
+			Name:  "tasks",
+			Usage: "List tasks",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "hosting",
+					Usage:       "hosting",
+					Destination: new(string),
+				},
+			},
+			Action: func(cCtx *cli.Context) error {
+				err := config.GlobalOpts.Validate()
+				if err != nil {
+					return err
+				}
+
+				client, err := api.NewClient(config.GlobalOpts.Region)
+				if err != nil {
+					return err
+				}
+
+				return commands.Tasks(client, cCtx.String("hosting"))
 			},
 		},
 		{
@@ -310,55 +359,6 @@ func main() {
 				}
 
 				return commands.DeleteUser(client, cCtx.String("hosting"), cCtx.Args().First())
-			},
-		},
-		{
-			Name:    "remove",
-			Aliases: []string{"rm"},
-			Usage:   "Remove websites (files & attached domains)",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Remove(client, cCtx.String("hosting"), cCtx.Args().First())
-			},
-		},
-		{
-			Name:  "tasks",
-			Usage: "List tasks",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Tasks(client, cCtx.String("hosting"))
 			},
 		},
 		{

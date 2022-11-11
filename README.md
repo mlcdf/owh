@@ -24,21 +24,21 @@ VERSION:
    (devel)
 
 COMMANDS:
-   login             Login to your OVHcloud account
-   hostings          List all your hostings
+   deploy            Deploy websites from a directory
    domains           List domains attached to a hosting
    domains:attach    Attach a domain
    domains:detach    Detach a domain
-   deploy            Deploy websites from a directory
+   help, h           Shows a list of commands or help for one command
+   hostings          List all your hostings
    link              Link current directory to an existing website on OVHcloud
+   login             Login to your OVHcloud account
    open              Open browser to current deployed website
+   remove, rm        Remove websites (files & attached domains)
+   tasks             List tasks
    users             List ssh/ftp users
    users:changepass  Change ssh/ftp users password
    users:delete      Delete ssh/ftp users
-   remove, rm        Remove websites (files & attached domains)
-   tasks             List tasks
    whoami            Shows info about the user currently logged in
-   help, h           Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --debug, -d    enable verbose output (default: false)
