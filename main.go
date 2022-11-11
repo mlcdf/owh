@@ -39,6 +39,7 @@ Written by Maxime Le Conte des Floris
 			Aliases: []string{"d"},
 		},
 	}
+	app.HideHelpCommand = true
 	app.Commands = []*cli.Command{
 		{
 			Name:  "deploy",
@@ -369,7 +370,7 @@ Written by Maxime Le Conte des Floris
 		},
 		{
 			Name:  "whoami",
-			Usage: "Shows info about the user currently logged in",
+			Usage: "Show info about the user currently logged in",
 			Action: func(cCtx *cli.Context) error {
 				err := config.GlobalOpts.Validate()
 				if err != nil {

@@ -38,7 +38,7 @@ COMMANDS:
    users             List ssh/ftp users
    users:changepass  Change ssh/ftp users password
    users:delete      Delete ssh/ftp users
-   whoami            Shows info about the user currently logged in
+   whoami            Show info about the user currently logged in
 
 GLOBAL OPTIONS:
    --debug, -d    enable verbose output (default: false)
