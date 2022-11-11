@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-isatty v0.0.16
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/sftp v1.13.5
-	github.com/urfave/cli/v2 v2.17.1
+	github.com/urfave/cli/v2 v2.23.5
 	go.mlcdf.fr/sally v0.0.0-20220309122800-c48002284cb5
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	golang.org/x/exp v0.0.0-20221006183845-316c7553db56
