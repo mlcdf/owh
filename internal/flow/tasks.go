@@ -1,30 +1,20 @@
-package commands
+package flow
 
 import (
 	"fmt"
 
 	"go.mlcdf.fr/owh/internal/api"
 	"go.mlcdf.fr/owh/internal/cmdutil"
-	"go.mlcdf.fr/owh/internal/config"
 )
 
-func Tasks(client *api.Client, hosting string) error {
-	if hosting == "" {
-		link, err := config.EnsureLink()
-		if err != nil {
-			return err
-		}
-
-		hosting = link.Hosting
-	}
-
+func ListTasks(client *api.Client, hosting string) (string, error) {
 	tasks, err := client.Tasks(hosting)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if len(tasks) == 0 {
-		return nil
+		return "", nil
 	}
 
 	tables := make([][]string, 0)
@@ -40,5 +30,5 @@ func Tasks(client *api.Client, hosting string) error {
 		tables = append(tables, row)
 	}
 
-	return cmdutil.PrintTable("", tables, "ID", "Function", "Status", "Start date", "Last update")
+	return cmdutil.Table("", tables, "ID", "Function", "Status", "Start date", "Last update")
 }

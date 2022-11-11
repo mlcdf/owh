@@ -8,7 +8,6 @@ import (
 	"go.mlcdf.fr/owh/internal/cmdutil"
 	"go.mlcdf.fr/owh/internal/config"
 	"go.mlcdf.fr/owh/internal/flow"
-	"golang.org/x/exp/slices"
 )
 
 func ListDomains(client *api.Client, hosting string) error {
@@ -26,10 +25,6 @@ func ListDomains(client *api.Client, hosting string) error {
 		return err
 	}
 
-	slices.SortFunc(domains, func(a api.AttachedDomain, b api.AttachedDomain) bool {
-		return a.Path < b.Path
-	})
-
 	if len(domains) == 0 {
 		return nil
 	}
@@ -46,7 +41,7 @@ func ListDomains(client *api.Client, hosting string) error {
 		tables = append(tables, row)
 	}
 
-	return cmdutil.Table("", tables, "Domain", "Path", "SSL", "Firewall")
+	return cmdutil.PrintTable("", tables, "Domain", "Path", "SSL", "Firewall")
 }
 
 func AttachDomain(client *api.Client, hosting string, domain string) error {

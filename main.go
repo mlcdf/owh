@@ -215,6 +215,23 @@ Written by Maxime Le Conte des Floris
 			},
 		},
 		{
+			Name:  "info",
+			Usage: "Show Info about the linked website",
+			Action: func(cCtx *cli.Context) error {
+				err := config.GlobalOpts.Validate()
+				if err != nil {
+					return err
+				}
+
+				client, err := api.NewClient(config.GlobalOpts.Region)
+				if err != nil {
+					return err
+				}
+
+				return commands.Info(client)
+			},
+		},
+		{
 			Name:  "link",
 			Usage: "Link current directory to an existing website on OVHcloud",
 			Flags: []cli.Flag{

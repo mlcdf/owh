@@ -1,8 +1,10 @@
 package cmdutil
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/olekukonko/tablewriter"
@@ -44,14 +46,36 @@ func Special(str string) string {
 	return lipgloss.NewStyle().Foreground(StyleSpecial).Render(str)
 }
 
+func PrintTable(title string, rows [][]string, cols ...string) error {
+	str, err := Table(title, rows, cols...)
+	if err != nil {
+		return err
+	}
+
+	if title != "" {
+		scanner := bufio.NewScanner(strings.NewReader(str))
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			fmt.Printf("  %s\n", line)
+		}
+	} else {
+		fmt.Println(str)
+	}
+
+	return nil
+}
+
 // Table renders the table defined by the given properties into w. Both title &
 // cols are optional.
-func Table(title string, rows [][]string, cols ...string) error {
+func Table(title string, rows [][]string, cols ...string) (string, error) {
+	tableString := &strings.Builder{}
+
+	table := tablewriter.NewWriter(tableString)
+
 	if title != "" {
 		fmt.Println(lipgloss.NewStyle().Bold(true).Render(title))
 	}
-
-	table := tablewriter.NewWriter(os.Stdout)
 
 	if len(cols) > 0 {
 		table.SetHeader(cols)
@@ -67,12 +91,39 @@ func Table(title string, rows [][]string, cols ...string) error {
 	table.SetNoWhiteSpace(true)
 	table.SetTablePadding("\t")
 
-	// table.SetColumnAlignment([]int{tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT})
 	table.AppendBulk(rows)
 
 	table.Render()
 
-	fmt.Println()
+	return tableString.String(), nil
+}
+
+type LabelValue struct {
+	Label string
+	Value string
+}
+
+func DescriptionTable(title string, rows []LabelValue) error {
+	var leftColumnSize int
+
+	for _, row := range rows {
+		if length := len(row.Label); leftColumnSize < length {
+			leftColumnSize = length
+		}
+	}
+
+	var leftColumn lipgloss.Style
+
+	if title != "" {
+		leftColumn = lipgloss.NewStyle().Width(leftColumnSize + 2).PaddingLeft(2)
+		fmt.Println(lipgloss.NewStyle().Bold(true).Render(title))
+	} else {
+		leftColumn = lipgloss.NewStyle().Width(leftColumnSize)
+	}
+
+	for _, row := range rows {
+		fmt.Printf("%s = %s\n", leftColumn.Render(row.Label), row.Value)
+	}
 
 	return nil
 }

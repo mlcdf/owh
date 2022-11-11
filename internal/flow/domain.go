@@ -108,3 +108,20 @@ func DetachDomain(client *api.Client, hosting string, domain string) error {
 
 	return nil
 }
+
+func DomainsWithPath(client *api.Client, hosting string, domain *api.AttachedDomain) ([]api.AttachedDomain, error) {
+	domains, err := client.Domains(hosting)
+	if err != nil {
+		return nil, err
+	}
+
+	out := []api.AttachedDomain{}
+
+	for _, d := range domains {
+		if d.Path == domain.Path {
+			out = append(out, d)
+		}
+	}
+
+	return out, nil
+}

@@ -55,6 +55,17 @@ type AttachedDomain struct {
 	SSL      bool   `json:"ssl"`
 }
 
+func (client *Client) GetHosting(hosting string) (*HostingInfo, error) {
+	var hostingInfo HostingInfo
+
+	err := client.Get("/hosting/web/"+hosting, &hostingInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return &hostingInfo, nil
+}
+
 func (client *Client) ListHostings() ([]string, error) {
 	var webs []string
 	err := client.Get("/hosting/web", &webs)
@@ -173,6 +184,10 @@ func (client *Client) Domains(hosting string) ([]AttachedDomain, error) {
 		return nil, err
 	}
 
+	slices.SortFunc(ds, func(a AttachedDomain, b AttachedDomain) bool {
+		return a.Path < b.Path
+	})
+
 	return ds, nil
 }
 
@@ -286,15 +301,4 @@ func (client *Client) ChangePassword(hosting string, user string, password strin
 	}
 
 	return nil
-}
-
-func (client *Client) HostingInfo(hosting string) (*HostingInfo, error) {
-	var hostingInfo HostingInfo
-
-	err := client.Get("/hosting/web/"+hosting, &hostingInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	return &hostingInfo, nil
 }

@@ -18,7 +18,7 @@ import (
 )
 
 func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
-	hostingInfo, err := client.HostingInfo(hosting)
+	hostingInfo, err := client.GetHosting(hosting)
 	if err != nil {
 		return nil, err
 	}

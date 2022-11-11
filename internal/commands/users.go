@@ -2,9 +2,9 @@ package commands
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/charmbracelet/lipgloss"
 	"go.mlcdf.fr/owh/internal/api"
 	"go.mlcdf.fr/owh/internal/cmdutil"
 	"go.mlcdf.fr/owh/internal/config"
@@ -27,25 +27,32 @@ func Users(client *api.Client, hosting string) error {
 		return err
 	}
 
-	hostingInfo, err := client.HostingInfo(hosting)
+	hostingInfo, err := client.GetHosting(hosting)
 	if err != nil {
 		return err
 	}
 
-	style := lipgloss.NewStyle().Width(25)
-	for _, user := range users {
+	tables := make([][]string, 0)
 
-		if credentials, ok := config.GlobalOpts.SFTPCredentials[hosting]; ok && credentials.User == user {
-			fmt.Printf("%s (configured on this machine)\n", style.Render(user))
-		} else if hostingInfo.PrimaryLogin == user {
-			fmt.Printf("%s (primary login)\n", style.Render(user))
-		} else {
-			fmt.Printf("%s\n", user)
+	for _, user := range users {
+		var primaryLogin bool
+
+		if hostingInfo.PrimaryLogin == user {
+			primaryLogin = true
 		}
 
+		if credentials, ok := config.GlobalOpts.SFTPCredentials[hosting]; ok && credentials.User == user {
+			user = cmdutil.Special(user)
+		}
+
+		row := []string{
+			user,
+			strconv.FormatBool(primaryLogin),
+		}
+		tables = append(tables, row)
 	}
 
-	return nil
+	return cmdutil.PrintTable("", tables, "Login", "Primary login")
 }
 
 func DeleteUser(client *api.Client, hosting string, user string) error {
@@ -59,7 +66,12 @@ func DeleteUser(client *api.Client, hosting string, user string) error {
 	}
 
 	if user == "" {
-		hostingInfo, err := client.HostingInfo(hosting)
+		if !cmdutil.IsInteractive() {
+			fmt.Printf("missing argument --user\n")
+			return cmdutil.ErrFlag
+		}
+
+		hostingInfo, err := client.GetHosting(hosting)
 		if err != nil {
 			return err
 		}

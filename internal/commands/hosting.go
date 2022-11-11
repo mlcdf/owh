@@ -26,5 +26,5 @@ func Hosting(client *api.Client, hosting string) error {
 		tables = append(tables, row)
 	}
 
-	return cmdutil.Table("", tables, "Name", "Display Name", "State", "IPv4", "IPv6", "Disk used", "Disk available")
+	return cmdutil.PrintTable("", tables, "Name", "Display Name", "State", "IPv4", "IPv6", "Disk used", "Disk available")
 }
