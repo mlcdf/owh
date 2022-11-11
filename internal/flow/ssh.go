@@ -27,11 +27,11 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 	if !ok {
 		credentials = &config.Credentials{}
 
-		if password := os.Getenv("OVH_SSH_PASSWORD"); password != "" {
+		if password := os.Getenv(config.ENV_SSH_PASSWORD); password != "" {
 			credentials.Password = password
 		}
 
-		if user := os.Getenv("OVH_SSH_USER"); user != "" {
+		if user := os.Getenv(config.ENV_SSH_USER); user != "" {
 			credentials.User = user
 		} else {
 			credentials.User = hostingInfo.PrimaryLogin

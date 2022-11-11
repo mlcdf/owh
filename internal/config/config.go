@@ -14,6 +14,12 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const ENV_PREFIX = "OWH_"
+const ENV_REGION = ENV_PREFIX + "REGION"
+const ENV_CONSUMER_KEY = ENV_PREFIX + "CONSUMER_KEY"
+const ENV_SSH_USER = ENV_PREFIX + "SSH_USER"
+const ENV_SSH_PASSWORD = ENV_PREFIX + "SSH_PASSWORD"
+
 // GlobalOpts holds the global owh configuration
 var GlobalOpts *globalOptions
 
@@ -59,9 +65,9 @@ func (opts *globalOptions) Save() error {
 func (opts *globalOptions) Validate() error {
 	if opts.Region == "" || opts.ConsumerKey == "" {
 		if ci := os.Getenv("CI"); ci != "" {
-			fmt.Println("To use owh in automation, set the OWH_CONSUMER_KEY environment variable.")
+			fmt.Printf("To use owh in automation, set the %s environment variable.\n", ENV_CONSUMER_KEY)
 		} else {
-			fmt.Println("Please run: owh login first.\nAlternatively, populate the OWH_CONSUMER_KEY environment variable with your consumer key.")
+			fmt.Printf("Please run: owh login first.\nAlternatively, populate the %s environment variable with your consumer key.\n", ENV_CONSUMER_KEY)
 		}
 		return cmdutil.ErrSilent
 	}
@@ -74,18 +80,22 @@ func (opts *globalOptions) Validate() error {
 	return nil
 }
 
+func (opts *globalOptions) Location() string {
+	return opts.location
+}
+
 func fromEnv(opts *globalOptions) {
-	if consumerKey := os.Getenv("OWH_CONSUMER_KEY"); consumerKey != "" {
+	if consumerKey := os.Getenv(ENV_CONSUMER_KEY); consumerKey != "" {
 		opts.ConsumerKey = consumerKey
 	}
 
-	region := os.Getenv("OWH_REGION")
+	region := os.Getenv(ENV_REGION)
 
 	if region != "" {
 		opts.Region = region
 	} else if region == "" && !cmdutil.IsInteractive() {
 		opts.Region = "ovh-eu"
-		logging.Debugf("OWH_REGION environment variable not set. Defaulting to '%s'.", opts.Region)
+		logging.Debugf("%s environment variable not set. Defaulting to '%s'.", ENV_REGION, opts.Region)
 	}
 }
 

@@ -24,6 +24,7 @@ VERSION:
    (devel)
 
 COMMANDS:
+   config            Show the owh configuration file location
    deploy            Deploy websites from a directory
    domains           List domains attached to a hosting
    domains:attach    Attach a domain

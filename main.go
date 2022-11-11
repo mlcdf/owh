@@ -42,6 +42,26 @@ Written by Maxime Le Conte des Floris
 	app.HideHelpCommand = true
 	app.Commands = []*cli.Command{
 		{
+			Name:  "config",
+			Usage: "Show the owh configuration file location",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:        "env",
+					Usage:       "Print the configuration as environnement variable (useful for CI)",
+					Destination: new(bool),
+					Value:       false,
+				},
+			},
+			Action: func(cCtx *cli.Context) error {
+				err := config.GlobalOpts.Validate()
+				if err != nil {
+					return err
+				}
+
+				return commands.Config(cCtx.Bool("env"))
+			},
+		},
+		{
 			Name:  "deploy",
 			Usage: "Deploy websites from a directory",
 			Flags: []cli.Flag{

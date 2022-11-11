@@ -12,6 +12,9 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const ENV_OWH_HOSTING = ENV_PREFIX + "HOSTING"
+const ENV_OWH_CANONICAL_DOMAIN = ENV_PREFIX + "CANONICAL_DOMAIN"
+
 var ErrFolderNotLinked = xerrors.Errorf("Directory not linked")
 
 type Link struct {
@@ -30,17 +33,18 @@ func NewLink() (*Link, error) {
 		return link, cmdutil.ErrSilent
 	}
 
-	if hosting := os.Getenv("OWH_HOSTING"); hosting != "" {
+	if hosting := os.Getenv(ENV_OWH_HOSTING); hosting != "" {
 		link.Hosting = hosting
 	}
 
-	if canonicalDomain := os.Getenv("OWH_CANONICAL_DOMAIN"); canonicalDomain != "" {
+	if canonicalDomain := os.Getenv(ENV_OWH_CANONICAL_DOMAIN); canonicalDomain != "" {
 		link.CanonicalDomain = canonicalDomain
 	}
 
 	if link.Hosting == "" || link.CanonicalDomain == "" {
 		return link, ErrFolderNotLinked
 	}
+
 	return link, nil
 }
 
@@ -52,7 +56,7 @@ func EnsureLink() (*Link, error) {
 			if cmdutil.IsInteractive() {
 				fmt.Println("Directory not linked. Please run: owh link")
 			} else {
-				fmt.Println("Please set the OWH_HOSTING and OWH_CANONICAL_DOMAIN environment variables")
+				fmt.Printf("Please set the %s and %s environment variables\n", ENV_OWH_HOSTING, ENV_OWH_CANONICAL_DOMAIN)
 			}
 			return nil, cmdutil.ErrSilent
 		}
