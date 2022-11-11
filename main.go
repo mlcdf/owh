@@ -20,6 +20,12 @@ var Version = "(devel)"
 func main() {
 	log.SetFlags(0)
 
+	cli.VersionPrinter = func(cCtx *cli.Context) {
+		fmt.Printf(`owh %s
+Written by Maxime Le Conte des Floris
+`, cCtx.App.Version)
+	}
+
 	app := cli.NewApp()
 
 	app.Name = "owh"
