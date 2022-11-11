@@ -66,7 +66,7 @@ func (client *Client) ListHostings() ([]string, error) {
 
 func (client *Client) HostingByDomain(domain string) (string, error) {
 	var hostings []string
-	url := fmt.Sprintf("/hosting/web/attachedDomains?domain=%s", domain)
+	url := fmt.Sprintf("/hosting/web/attachedDomain?domain=%s", domain)
 
 	err := client.Get(url, &hostings)
 	if err != nil {
