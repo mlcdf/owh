@@ -31,6 +31,11 @@ func Deploy(client *api.Client, options *DeployOptions) error {
 			return err
 		}
 
+		if !cmdutil.IsInteractive() {
+			fmt.Printf("Please set the %s and %s environment variables\n", config.ENV_OWH_HOSTING, config.ENV_OWH_CANONICAL_DOMAIN)
+			return cmdutil.ErrSilent
+		}
+
 		path, err := os.Getwd()
 		if err != nil {
 			return err
