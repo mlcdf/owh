@@ -101,7 +101,11 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 	}
 
 	addr := fmt.Sprintf("%s:%d", hostingInfo.ServiceManagementAccess.SSH.URL, hostingInfo.ServiceManagementAccess.SSH.Port)
-	logging.Debugf("ssh %s -l %s (passwd: %s)", strings.ReplaceAll(addr, ":22", ""), credentials.User, credentials.Password)
+	logging.Debugf(
+		"ssh %s -l %s (passwd: %s)",
+		strings.ReplaceAll(addr, ":22", ""),
+		credentials.User, credentials.Password,
+	)
 
 	var conn *ssh.Client
 
@@ -120,7 +124,12 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 
 func createSSHUser(client *api.Client, primaryLogin string, hosting string) (*config.Credentials, error) {
 	login := fmt.Sprintf("%s-owh", primaryLogin)
-	prompt := &survey.Input{Message: "SSH user", Default: login, Help: fmt.Sprintf("It should start with %s-", primaryLogin)}
+	prompt := &survey.Input{
+		Message: "SSH user",
+		Default: login,
+		Help:    fmt.Sprintf("It should start with %s-", primaryLogin),
+		// TODO: validate input
+	}
 
 	err := survey.AskOne(prompt, &login, survey.WithValidator(survey.Required))
 	if err != nil {
@@ -182,11 +191,10 @@ func validatePassword(password string) bool {
 		case unicode.IsLetter(c) || c == ' ':
 			letters++
 		default:
-
 		}
 	}
 
-	if letters < 8 && letters > 20 {
+	if letters < 8 || letters > 20 {
 		return false
 	}
 
@@ -195,7 +203,6 @@ func validatePassword(password string) bool {
 
 func ChangePassword(client *api.Client, hosting string, user string, password string) error {
 	if password == "" {
-
 		prompt := &survey.Input{
 			Message: "Password (alphanumeric characters only, leave blank to use an auto-generated password)",
 		}

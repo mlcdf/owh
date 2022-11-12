@@ -13,8 +13,7 @@ type Me struct {
 func (client *Client) GetMe() (*Me, error) {
 	var me Me
 
-	err := client.Get("/me", &me)
-	if err != nil {
+	if err := client.Get("/me", &me); err != nil {
 		return nil, xerrors.Errorf("failed to get /me: %w", err)
 	}
 

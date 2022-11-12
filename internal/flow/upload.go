@@ -19,7 +19,9 @@ const mega = 1_000_000
 func skipFile(path string) bool {
 	basepath := filepath.Base(path)
 
-	if strings.HasPrefix(basepath, ".") && !strings.ContainsAny(basepath, ".well-known") && !strings.ContainsAny(basepath, ".htacess") {
+	if strings.HasPrefix(basepath, ".") &&
+		!strings.ContainsAny(basepath, ".well-known") &&
+		!strings.ContainsAny(basepath, ".htacess") {
 		return true
 	}
 
@@ -89,7 +91,7 @@ func Sync(client *sftp.Client, src string, dest string) error {
 
 	// Create new files
 	_fs := os.DirFS(src)
-	fs.WalkDir(_fs, ".", func(path string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(_fs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -120,8 +122,6 @@ func Sync(client *sftp.Client, src string, dest string) error {
 
 		return syncFile(client, localpath, remotepath)
 	})
-
-	return nil
 }
 
 func isIdentical(path1, path2 string) (bool, error) {

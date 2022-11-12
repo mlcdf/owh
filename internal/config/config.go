@@ -1,12 +1,11 @@
 package config
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path"
-
-	_ "embed"
 
 	"github.com/adrg/xdg"
 	"go.mlcdf.fr/owh/internal/cmdutil"
@@ -20,7 +19,7 @@ const ENV_CONSUMER_KEY = ENV_PREFIX + "CONSUMER_KEY"
 const ENV_SSH_USER = ENV_PREFIX + "SSH_USER"
 const ENV_SSH_PASSWORD = ENV_PREFIX + "SSH_PASSWORD"
 
-// GlobalOpts holds the global owh configuration
+// GlobalOpts holds the global owh configuration.
 var GlobalOpts *globalOptions
 
 type globalOptions struct {
@@ -67,13 +66,19 @@ func (opts *globalOptions) Validate() error {
 		if ci := os.Getenv("CI"); ci != "" {
 			fmt.Printf("To use owh in automation, set the %s environment variable.\n", ENV_CONSUMER_KEY)
 		} else {
-			fmt.Printf("Please run: owh login first.\nAlternatively, populate the %s environment variable with your consumer key.\n", ENV_CONSUMER_KEY)
+			fmt.Printf(
+				"Please run: owh login first.\nAlternatively, populate the %s environment variable with your consumer key.\n",
+				ENV_CONSUMER_KEY,
+			)
 		}
 		return cmdutil.ErrSilent
 	}
 
 	if opts.Region != "ovh-eu" && opts.Region != "ovh-ca" {
-		fmt.Printf("Invalid owh configuration file format: %s. Try to remove it and run: owh login", cmdutil.Color(cmdutil.StyleHighlight).Render(opts.location))
+		fmt.Printf(
+			"Invalid owh configuration file format: %s. Try to remove it and run: owh login",
+			cmdutil.Color(cmdutil.StyleHighlight).Render(opts.location),
+		)
 		return cmdutil.ErrSilent
 	}
 
@@ -115,7 +120,10 @@ func fromFile[Options *globalOptions | *Link](opts Options, location string) err
 
 	decoder := json.NewDecoder(fh)
 	if err := decoder.Decode(&opts); err != nil {
-		fmt.Printf("Folder link is invalid %s. Try to remove it and run: owh login", cmdutil.Color(cmdutil.StyleHighlight).Render(location))
+		fmt.Printf(
+			"Folder link is invalid %s. Try to remove it and run: owh login",
+			cmdutil.Color(cmdutil.StyleHighlight).Render(location),
+		)
 		return cmdutil.ErrSilent
 	}
 	return nil

@@ -17,7 +17,10 @@ func Login() error {
 	if config.GlobalOpts.ConsumerKey != "" && cmdutil.IsInteractive() {
 		var shouldContinue bool
 
-		err := survey.AskOne(&survey.Confirm{Message: "You're already logged in. Do you want to re-authenticate?"}, &shouldContinue)
+		err := survey.AskOne(
+			&survey.Confirm{Message: "You're already logged in. Do you want to re-authenticate?"},
+			&shouldContinue,
+		)
 		if err != nil {
 			return xerrors.Errorf("failed to display prompt %w", err)
 		}

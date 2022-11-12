@@ -48,7 +48,7 @@ func NewLink() (*Link, error) {
 	return link, nil
 }
 
-// EnsureLink retrieve a Link from environment variables and config file
+// EnsureLink retrieve a Link from environment variables and config file.
 func EnsureLink() (*Link, error) {
 	link, err := NewLink()
 	if err != nil {
@@ -68,8 +68,7 @@ func EnsureLink() (*Link, error) {
 }
 
 func (link *Link) Save() error {
-	err := save(link)
-	if err != nil {
+	if err := save(link); err != nil {
 		return err
 	}
 
@@ -102,7 +101,7 @@ func (link *Link) gitignore() error {
 
 	lines = append(lines, "\n"+filename)
 
-	err = os.WriteFile(".gitignore", []byte(strings.Join(lines, "\n")), 06400)
+	err = os.WriteFile(".gitignore", []byte(strings.Join(lines, "\n")), 0640)
 	if err != nil {
 		return err
 	}

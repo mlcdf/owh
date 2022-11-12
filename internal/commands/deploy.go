@@ -32,7 +32,11 @@ func Deploy(client *api.Client, options *DeployOptions) error {
 		}
 
 		if !cmdutil.IsInteractive() {
-			fmt.Printf("Please set the %s and %s environment variables\n", config.ENV_OWH_HOSTING, config.ENV_OWH_CANONICAL_DOMAIN)
+			fmt.Printf(
+				"Please set the %s and %s environment variables\n",
+				config.ENV_OWH_HOSTING,
+				config.ENV_OWH_CANONICAL_DOMAIN,
+			)
 			return cmdutil.ErrSilent
 		}
 

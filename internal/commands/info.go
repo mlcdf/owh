@@ -34,8 +34,8 @@ func Info(client *api.Client) error {
 	hostingInfo := []cmdutil.LabelValue{
 		{Label: "Service name", Value: hosting.ServiceName},
 		{Label: "Display name", Value: hosting.DisplayName},
-		{Label: "IPv4", Value: hosting.HostingIp},
-		{Label: "IPv6", Value: hosting.HostingIpv6},
+		{Label: "IPv4", Value: hosting.HostingIP},
+		{Label: "IPv6", Value: hosting.HostingIPv6},
 		{Label: "Disk used", Value: hosting.QuotaUsed.String()},
 		{Label: "Disk available", Value: hosting.QuotaSize.String()},
 	}

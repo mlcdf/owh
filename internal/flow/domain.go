@@ -3,6 +3,7 @@ package flow
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -32,9 +33,12 @@ func AttachDomain(client *api.Client, hosting string, domain string, www bool) (
 		if err != nil {
 			return "", err
 		}
-		fmt.Printf("Domains %s and %s attached\n", cmdutil.Color(cmdutil.StyleHighlight).Render(domain), cmdutil.Color(cmdutil.StyleHighlight).Render(suggestedDomain))
+		fmt.Printf(
+			"Domains %s and %s attached\n",
+			cmdutil.Highlight(domain),
+			cmdutil.Highlight(suggestedDomain))
 	} else {
-		fmt.Printf("Domain %s attached\n", cmdutil.Color(cmdutil.StyleHighlight).Render(domain))
+		fmt.Printf("Domain %s attached\n", cmdutil.Highlight(domain))
 	}
 
 	return domain, nil
@@ -43,17 +47,17 @@ func AttachDomain(client *api.Client, hosting string, domain string, www bool) (
 func suggestDomain(domain string) string {
 	if strings.HasPrefix(domain, "www") {
 		return strings.Replace(domain, "www.", "", 1)
-	} else {
-		return "www." + domain
 	}
+
+	return "www." + domain
 }
 
 func attachDomain(client *api.Client, hosting string, domain string, path string) error {
 	attachedDomain, err := client.GetDomain(hosting, domain)
-	if err != nil {
 
+	if err != nil {
 		var e *ovh.APIError
-		if errors.As(err, &e) && e.Code == 404 {
+		if errors.As(err, &e) && e.Code == http.StatusNotFound {
 			err := client.PostDomain(hosting, domain)
 			if err == nil {
 				return nil
@@ -101,9 +105,9 @@ func DetachDomain(client *api.Client, hosting string, domain string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Domains %s and %s Detached\n", cmdutil.Color(cmdutil.StyleHighlight).Render(hosting), cmdutil.Color(cmdutil.StyleHighlight).Render(suggestedDomain))
+		fmt.Printf("Domains %s and %s Detached\n", cmdutil.Highlight(hosting), cmdutil.Highlight(suggestedDomain))
 	} else {
-		fmt.Printf("Domain %s Detached\n", cmdutil.Color(cmdutil.StyleHighlight).Render(hosting))
+		fmt.Printf("Domain %s Detached\n", cmdutil.Highlight(hosting))
 	}
 
 	return nil

@@ -10,8 +10,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
-var NotHostingFound = errors.New("Not hosting found")
-var MoreThanOneHostingFound = errors.New("More than one hosting found")
+var ErrNotHostingFound = errors.New("no hosting found")
+var ErrMoreThanOneHostingFound = errors.New("more than one hosting found")
 
 type UnitValue struct {
 	Unit  string  `json:"unit"`
@@ -26,8 +26,8 @@ type HostingInfo struct {
 	ServiceName             string `json:"serviceName"`
 	DisplayName             string `json:"displayName"`
 	HasCDN                  bool   `json:"hasCdn"`
-	HostingIp               string `json:"hostingIp"`
-	HostingIpv6             string `json:"hostingIpv6"`
+	HostingIP               string `json:"hostingIp"`
+	HostingIPv6             string `json:"hostingIpv6"`
 	State                   string `json:"state"`
 	PrimaryLogin            string `json:"primaryLogin"`
 	ServiceManagementAccess struct {
@@ -85,11 +85,11 @@ func (client *Client) HostingByDomain(domain string) (string, error) {
 	}
 
 	if len(hostings) == 0 {
-		return "", NotHostingFound
+		return "", ErrNotHostingFound
 	}
 
 	if len(hostings) > 1 {
-		return "", MoreThanOneHostingFound
+		return "", ErrMoreThanOneHostingFound
 	}
 
 	return hostings[0], nil
@@ -262,8 +262,7 @@ func (client *Client) ListUsers(hosting string) ([]string, error) {
 	var users []string
 	url := fmt.Sprintf("/hosting/web/%s/user", hosting)
 
-	err := client.Get(url, &users)
-	if err != nil {
+	if err := client.Get(url, &users); err != nil {
 		return nil, xerrors.Errorf("failed to GET %s: %w", url, err)
 	}
 
@@ -275,8 +274,7 @@ func (client *Client) ListUsers(hosting string) ([]string, error) {
 func (client *Client) DeleteUser(hosting string, user string) error {
 	url := fmt.Sprintf("/hosting/web/%s/user/%s", hosting, user)
 
-	err := client.Delete(url, nil)
-	if err != nil {
+	if err := client.Delete(url, nil); err != nil {
 		return xerrors.Errorf("failed to DELETE %s: %w", url, err)
 	}
 

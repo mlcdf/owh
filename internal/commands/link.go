@@ -23,7 +23,10 @@ func Link(client *api.Client, hosting string, domain string) error {
 		}
 
 		var shouldContinue bool
-		err = survey.AskOne(&survey.Confirm{Message: "Current directory already linked. Do you want to continue?"}, &shouldContinue)
+		err = survey.AskOne(
+			&survey.Confirm{Message: "Current directory already linked. Do you want to continue?"},
+			&shouldContinue,
+		)
 		if err != nil {
 			return err
 		}
@@ -55,6 +58,10 @@ func Link(client *api.Client, hosting string, domain string) error {
 		return err
 	}
 
-	fmt.Printf("Linked to hosting %s and domain %s on OVHcloud (created .owh.json and added it to .gitignore)\n", cmdutil.Highlight(hosting), cmdutil.Highlight(domain))
+	fmt.Printf(
+		"Linked to hosting %s and domain %s on OVHcloud (created .owh.json and added it to .gitignore)\n",
+		cmdutil.Highlight(hosting),
+		cmdutil.Highlight(domain),
+	)
 	return nil
 }

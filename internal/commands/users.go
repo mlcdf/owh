@@ -100,7 +100,10 @@ func DeleteUser(client *api.Client, hosting string, user string) error {
 
 	if credentials, ok := config.GlobalOpts.SFTPCredentials[hosting]; ok && credentials.User == user {
 		var shouldContinue bool
-		prompt := &survey.Confirm{Message: fmt.Sprintf("Warning: the user %s is used by this very projet. Are you sure you want to delete it?", user), Default: false}
+		prompt := &survey.Confirm{
+			Message: fmt.Sprintf("Warning: the user %s is used by this very projet. Are you sure you want to delete it?", user),
+			Default: false,
+		}
 
 		err := survey.AskOne(prompt, &shouldContinue)
 		if err != nil {

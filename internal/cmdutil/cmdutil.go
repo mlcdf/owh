@@ -6,20 +6,19 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-isatty"
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/xerrors"
-
-	"github.com/charmbracelet/lipgloss"
 )
 
-// ErrSilent is an error that triggers exit code 1 without any error messaging
+// ErrSilent is an error that triggers exit code 1 without any error messaging.
 var ErrSilent = xerrors.New("ErrSilent")
 
-// ErrCancel signals user-initiated cancellation
+// ErrCancel signals user-initiated cancellation.
 var ErrCancel = xerrors.New("ErrCancel")
 
-// ErrFlag is an error of flags or arguments (missing argument, invalid flag, etc...)
+// ErrFlag is an error of flags or arguments (missing argument, invalid flag, etc...).
 var ErrFlag = xerrors.New("ErrFlag")
 
 var StyleSubtle = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
@@ -103,7 +102,7 @@ type LabelValue struct {
 	Value string
 }
 
-func DescriptionTable(title string, rows []LabelValue) error {
+func DescriptionTable(title string, rows []LabelValue) {
 	var leftColumnSize int
 
 	for _, row := range rows {
@@ -124,6 +123,4 @@ func DescriptionTable(title string, rows []LabelValue) error {
 	for _, row := range rows {
 		fmt.Printf("%s = %s\n", leftColumn.Render(row.Label), row.Value)
 	}
-
-	return nil
 }

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 
 	"go.mlcdf.fr/owh/internal/config"
@@ -17,7 +18,7 @@ func Config(asEnv bool) error {
 
 	link, err := config.NewLink()
 	if err != nil {
-		if err != config.ErrFolderNotLinked {
+		if !errors.Is(err, config.ErrFolderNotLinked) {
 			return err
 		}
 		return nil

@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -13,15 +14,15 @@ func SelectHosting(client *api.Client, domain string) (string, error) {
 	if domain != "" {
 		hosting, err := client.HostingByDomain(domain)
 		if err == nil {
-			return hosting, err
+			return hosting, nil
 		}
 
-		if err == api.NotHostingFound {
+		if errors.Is(err, api.ErrNotHostingFound) {
 			fmt.Printf("No associated hosting found for the domain %s\n", domain)
 			return "", cmdutil.ErrSilent
 		}
 
-		if err != api.MoreThanOneHostingFound {
+		if errors.Is(err, api.ErrMoreThanOneHostingFound) {
 			return "", err
 		}
 

@@ -18,8 +18,8 @@ func Hosting(client *api.Client, hosting string) error {
 			hosting.ServiceName,
 			hosting.DisplayName,
 			hosting.State,
-			hosting.HostingIp,
-			hosting.HostingIpv6,
+			hosting.HostingIP,
+			hosting.HostingIPv6,
 			hosting.QuotaUsed.String(),
 			hosting.QuotaSize.String(),
 		}
