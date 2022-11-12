@@ -233,7 +233,7 @@ func (client *Client) PostDomain(hosting string, domain string) error {
 		return xerrors.Errorf("failed to POST /hosting/web/%s/attachedDomain %s: %w", hosting, domain, err)
 	}
 
-	err = client.WaitTaskDone(hosting, task.ID)
+	err = client.WaitTaskDone(hosting, task.ID, "Attaching domain "+domain)
 	if err != nil {
 		return xerrors.Errorf("failed to attach domain: %w", err)
 	}
@@ -250,7 +250,7 @@ func (client *Client) DeleteDomain(hosting string, domain string) error {
 		return xerrors.Errorf("failed to DELETE %s: %w", url, err)
 	}
 
-	err = client.WaitTaskDone(hosting, task.ID)
+	err = client.WaitTaskDone(hosting, task.ID, "Detaching domain")
 	if err != nil {
 		return err
 	}
@@ -295,7 +295,7 @@ func (client *Client) ChangePassword(hosting string, user string, password strin
 		return xerrors.Errorf("failed to POST %s: %w", url, err)
 	}
 
-	err = client.WaitTaskDone(hosting, task.ID)
+	err = client.WaitTaskDone(hosting, task.ID, "Updating password")
 	if err != nil {
 		return err
 	}

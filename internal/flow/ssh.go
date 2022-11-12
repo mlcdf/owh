@@ -142,7 +142,7 @@ func createSSHUser(client *api.Client, primaryLogin string, hosting string) (*co
 		return nil, xerrors.Errorf("failed to create SSH user: %w", err)
 	}
 
-	err = client.WaitTaskDone(hosting, task.ID)
+	err = client.WaitTaskDone(hosting, task.ID, fmt.Sprintf("Creating SSH user %s", login))
 	if err != nil {
 		var response interface{}
 		err := client.Get(url, response)

@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/alitto/pond"
 	"github.com/ovh/go-ovh/ovh"
 	"go.mlcdf.fr/owh/internal/cmdutil"
+	"go.mlcdf.fr/owh/internal/cmdutil/spinner"
 	"golang.org/x/xerrors"
 )
 
@@ -71,12 +73,13 @@ func (client *Client) Tasks(hosting string) ([]*Task, error) {
 	return tasks, nil
 }
 
-func (client *Client) WaitTaskDone(hosting string, id int64) error {
+func (client *Client) WaitTaskDone(hosting string, id int64, message string) error {
 	var task *Task
 	t := time.Now()
 
 	if cmdutil.IsInteractive() {
-		fmt.Println("This may take a while... hang in there")
+		spinner.Start(message)
+		defer spinner.Stop()
 	}
 
 	for {
@@ -85,7 +88,7 @@ func (client *Client) WaitTaskDone(hosting string, id int64) error {
 		if err != nil {
 			var e *ovh.APIError
 			if errors.As(err, &e) {
-				if e.Code == 404 {
+				if e.Code == http.StatusNotFound {
 					// We arrive here when the task have been archived
 					return nil
 				}
@@ -98,12 +101,14 @@ func (client *Client) WaitTaskDone(hosting string, id int64) error {
 		}
 
 		if task.Status == "error" || task.Status == "cancelled" {
-			fmt.Printf("unexpected task status %s for ssh user creation (task_id: %d)\n", task.Status, id)
+			spinner.Stop()
+			fmt.Printf("Unexpected task status %s for ssh user creation (task_id: %d)\n", task.Status, id)
 			return cmdutil.ErrSilent
 		}
 
-		if time.Since(t) > 3*time.Minute {
-			fmt.Printf("timed out waiting (3 minutes) for %s task completion (task_id: %d)\n", task.Function, id)
+		if time.Since(t) > 5*time.Minute {
+			spinner.Stop()
+			fmt.Printf("Timed out waiting (3 minutes) for %s task completion (task_id: %d)\n", task.Function, id)
 			return cmdutil.ErrSilent
 		}
 	}
