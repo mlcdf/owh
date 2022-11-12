@@ -30,6 +30,8 @@ func (client *Client) WaitForValidation() error {
 				time.Sleep(2 * time.Second)
 				retry++
 			}
+		} else {
+			return err
 		}
 	}
 

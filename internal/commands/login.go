@@ -40,7 +40,7 @@ func Login() error {
 
 	config.GlobalOpts.Region = selectedRegion
 
-	client, err := api.NewClient(selectedRegion)
+	client, err := api.NewUnloggedClient(selectedRegion)
 	if err != nil {
 		return err
 	}

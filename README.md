@@ -52,7 +52,6 @@ GLOBAL OPTIONS:
 MVP:
 - Uniformize terminal output across all commands (color, style, stderr/stdout)
 - Add tests
-- Better handling of expired OVH API token
 
 Nice to have:
 - Stats command ?
