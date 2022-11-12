@@ -13,7 +13,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func Remove(client *api.Client, hosting string, domain string) error {
+func Remove(client *api.Client, hosting string, domain string, yes bool) error {
 	if hosting == "" && domain == "" {
 		link, err := config.EnsureLink()
 		if err != nil {
@@ -48,16 +48,19 @@ func Remove(client *api.Client, hosting string, domain string) error {
 	}
 
 	if len(mightBeRelated) == 0 {
-		var shouldContinue bool
-		prompt := &survey.Confirm{Message: fmt.Sprintf("Are you sure you want to remove %s on hosting %s", domain, hosting)}
+		if cmdutil.IsInteractive() && !yes {
+			var shouldContinue bool
 
-		err := survey.AskOne(prompt, &shouldContinue)
-		if err != nil {
-			return err
-		}
+			prompt := &survey.Confirm{Message: fmt.Sprintf("Are you sure you want to remove %s on hosting %s", domain, hosting)}
 
-		if !shouldContinue {
-			return cmdutil.ErrCancel
+			err := survey.AskOne(prompt, &shouldContinue)
+			if err != nil {
+				return err
+			}
+
+			if !shouldContinue {
+				return cmdutil.ErrCancel
+			}
 		}
 
 		return nuke(client, hosting, &selectedDomain)
@@ -66,16 +69,21 @@ func Remove(client *api.Client, hosting string, domain string) error {
 	mightBeRelated = slices.Insert(mightBeRelated, 0, selectedDomain.Domain)
 	mapDomains[selectedDomain.Domain] = selectedDomain
 
-	prompt := &survey.MultiSelect{
-		Message: "We found some domains that might be related. Select the ones to remove.",
-		Options: mightBeRelated,
-		Default: []string{selectedDomain.Domain},
-	}
 	var selectedDomains []string
 
-	err = survey.AskOne(prompt, &selectedDomains)
-	if err != nil {
-		return err
+	if cmdutil.IsInteractive() && !yes {
+		prompt := &survey.MultiSelect{
+			Message: "We found some domains that might be related. Select the ones to remove.",
+			Options: mightBeRelated,
+			Default: []string{selectedDomain.Domain},
+		}
+
+		err = survey.AskOne(prompt, &selectedDomains)
+		if err != nil {
+			return err
+		}
+	} else {
+		selectedDomains = mightBeRelated
 	}
 
 	for _, domain := range selectedDomains {

@@ -284,6 +284,11 @@ Written by Maxime Le Conte des Floris
 					Usage:       "hosting",
 					Destination: new(string),
 				},
+				&cli.BoolFlag{
+					Name:        "yes",
+					Usage:       "Bypass confirmation prompts",
+					Destination: new(bool),
+				},
 			},
 			Action: func(cCtx *cli.Context) error {
 				err := config.GlobalOpts.Validate()
@@ -296,7 +301,7 @@ Written by Maxime Le Conte des Floris
 					return err
 				}
 
-				return commands.Remove(client, cCtx.String("hosting"), cCtx.Args().First())
+				return commands.Remove(client, cCtx.String("hosting"), cCtx.Args().First(), cCtx.Bool("yes"))
 			},
 		},
 		{
@@ -444,7 +449,7 @@ Written by Maxime Le Conte des Floris
 			os.Exit(2)
 		}
 
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
 		os.Exit(1)
 	}
 

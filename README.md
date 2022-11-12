@@ -50,7 +50,6 @@ GLOBAL OPTIONS:
 ## TODO
 
 MVP:
-- Add matching flags to interactive inputs
 - Uniformize terminal output across all commands (color, style, stderr/stdout)
 - Add tests
 - Better handling of expired OVH API token
