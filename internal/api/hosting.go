@@ -6,21 +6,13 @@ import (
 	"fmt"
 
 	"github.com/alitto/pond"
+	"go.mlcdf.fr/owh/internal/unit"
 	"golang.org/x/exp/slices"
 	"golang.org/x/xerrors"
 )
 
 var ErrNotHostingFound = errors.New("no hosting found")
 var ErrMoreThanOneHostingFound = errors.New("more than one hosting found")
-
-type UnitValue struct {
-	Unit  string  `json:"unit"`
-	Value float32 `json:"value"`
-}
-
-func (uv *UnitValue) String() string {
-	return fmt.Sprintf("%.1f %s", uv.Value, uv.Unit)
-}
 
 type HostingInfo struct {
 	ServiceName             string `json:"serviceName"`
@@ -36,9 +28,9 @@ type HostingInfo struct {
 			URL  string `json:"url"`
 		} `json:"ssh"`
 	} `json:"serviceManagementAccess"`
-	Offer     string    `json:"offer"`
-	QuotaSize UnitValue `json:"quotaSize"`
-	QuotaUsed UnitValue `json:"quotaUsed"`
+	Offer     string         `json:"offer"`
+	QuotaSize unit.UnitValue `json:"quotaSize"`
+	QuotaUsed unit.UnitValue `json:"quotaUsed"`
 }
 
 type SSHUser struct {

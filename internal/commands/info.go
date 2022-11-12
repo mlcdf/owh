@@ -8,6 +8,7 @@ import (
 	"go.mlcdf.fr/owh/internal/cmdutil"
 	"go.mlcdf.fr/owh/internal/config"
 	"go.mlcdf.fr/owh/internal/flow"
+	"go.mlcdf.fr/owh/internal/unit"
 )
 
 func Info(client *api.Client) error {
@@ -36,8 +37,12 @@ func Info(client *api.Client) error {
 		{Label: "Display name", Value: hosting.DisplayName},
 		{Label: "IPv4", Value: hosting.HostingIP},
 		{Label: "IPv6", Value: hosting.HostingIPv6},
-		{Label: "Disk used", Value: hosting.QuotaUsed.String()},
-		{Label: "Disk available", Value: hosting.QuotaSize.String()},
+		{Label: "Disk quota", Value: hosting.QuotaUsed.String() + " / " + hosting.QuotaSize.String()},
+	}
+
+	quota, err := unit.Quota(hosting.QuotaUsed, hosting.QuotaSize)
+	if err == nil && quota > 0.01 {
+		hostingInfo[len(hostingInfo)-1].Value += fmt.Sprintf(" (%.2f)", quota)
 	}
 
 	cmdutil.DescriptionTable("Web hosting", hostingInfo)
