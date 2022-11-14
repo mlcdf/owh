@@ -215,7 +215,7 @@ func main() {
 		},
 		{
 			Name:  "info",
-			Usage: "Show Info about the linked website",
+			Usage: "Show info about the linked website",
 			Action: func(cCtx *cli.Context) error {
 				err := config.GlobalOpts.Validate()
 				if err != nil {
@@ -268,7 +268,7 @@ func main() {
 		},
 		{
 			Name:  "logs",
-			Usage: "Login to your OVHcloud account",
+			Usage: "View access logs",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "home",

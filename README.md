@@ -33,7 +33,7 @@ COMMANDS:
    info              Show info about the linked website
    link              Link current directory to an existing website on OVHcloud
    login             Login to your OVHcloud account
-   logs              Login to your OVHcloud account
+   logs              View access logs
    open              Open browser to current deployed website
    remove, rm        Remove websites (files & attached domains)
    tasks             List tasks
