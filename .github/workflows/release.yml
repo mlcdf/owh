@@ -1,0 +1,53 @@
+name: release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ">=1.19.3"
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build binaries
+        run: |
+          export VERSION=$(git describe --tags)
+          export CGO_ENABLED=0
+          export LDFLAGS="-X 'main.Version=${VERSION}'"
+
+          GOOS=linux GOARCH=amd64 go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags ${LDFLAGS}
+          GOOS=linux GOARCH=arm GOARM=6 go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags ${LDFLAGS}
+          GOOS=linux GOARCH=arm64 go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags ${LDFLAGS}
+          GOOS=darwin GOARCH=amd64 go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags ${LDFLAGS}
+          GOOS=windows GOARCH=amd64 go build -o "owh-${VERSION}-${GOOS}-${GOARCH}.exe" -ldflags ${LDFLAGS}
+
+      - name: Upload release artifacts
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs").promises;
+            const { repo: { owner, repo }, sha } = context;
+            const release = await github.repos.getReleaseByTag({
+              owner, repo,
+              tag: process.env.GITHUB_REF.replace("refs/tags/", ""),
+            });
+            console.log("Release:", { release });
+            for (let file of await fs.readdir(".")) {
+              if (!file.startsWith("owh-")) continue;
+              console.log("Uploading", file);
+              await github.repos.uploadReleaseAsset({
+                owner, repo,
+                release_id: release.data.id,
+                name: file,
+                data: await fs.readFile(file),
+              });
+            }
