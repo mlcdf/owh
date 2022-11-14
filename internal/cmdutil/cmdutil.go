@@ -111,13 +111,10 @@ func DescriptionTable(title string, rows []LabelValue) {
 		}
 	}
 
-	var leftColumn lipgloss.Style
+	leftColumn := lipgloss.NewStyle().Width(leftColumnSize + 2).PaddingLeft(2)
 
 	if title != "" {
-		leftColumn = lipgloss.NewStyle().Width(leftColumnSize + 2).PaddingLeft(2)
 		fmt.Println(lipgloss.NewStyle().Bold(true).Render(title))
-	} else {
-		leftColumn = lipgloss.NewStyle().Width(leftColumnSize)
 	}
 
 	for _, row := range rows {

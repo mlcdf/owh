@@ -21,9 +21,7 @@ func main() {
 	log.SetFlags(0)
 
 	cli.VersionPrinter = func(cCtx *cli.Context) {
-		fmt.Printf(`owh %s
-Written by Maxime Le Conte des Floris
-`, cCtx.App.Version)
+		commands.Version(Version)
 	}
 
 	app := cli.NewApp()
