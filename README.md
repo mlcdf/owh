@@ -33,6 +33,7 @@ COMMANDS:
    info              Show info about the linked website
    link              Link current directory to an existing website on OVHcloud
    login             Login to your OVHcloud account
+   logs              Login to your OVHcloud account
    open              Open browser to current deployed website
    remove, rm        Remove websites (files & attached domains)
    tasks             List tasks
@@ -52,7 +53,3 @@ GLOBAL OPTIONS:
 MVP:
 - Uniformize terminal output across all commands (color, style, stderr/stdout)
 - Add tests
-
-Nice to have:
-- Stats command ?
-- Logs command if possible ?

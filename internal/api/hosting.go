@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/alitto/pond"
 	"go.mlcdf.fr/owh/internal/unit"
@@ -291,4 +292,20 @@ func (client *Client) ChangePassword(hosting string, user string, password strin
 	}
 
 	return nil
+}
+
+func (client *Client) GetUserLogsToken(hosting string, ttl time.Duration) (string, error) {
+	if ttl < 5*time.Minute {
+		ttl = 5 * time.Minute
+	}
+
+	var token string
+	url := fmt.Sprintf("/hosting/web/%s/userLogsToken?remoteCheck=true&ttl=%f", hosting, ttl.Seconds())
+
+	err := client.Get(url, &token)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

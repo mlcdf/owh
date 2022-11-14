@@ -12,6 +12,7 @@ import (
 	"go.mlcdf.fr/owh/internal/cmdutil"
 	"go.mlcdf.fr/owh/internal/commands"
 	"go.mlcdf.fr/owh/internal/config"
+	"go.mlcdf.fr/sally/cache"
 	"go.mlcdf.fr/sally/logging"
 )
 
@@ -263,6 +264,50 @@ func main() {
 			Usage: "Login to your OVHcloud account",
 			Action: func(cCtx *cli.Context) error {
 				return commands.Login()
+			},
+		},
+		{
+			Name:  "logs",
+			Usage: "Login to your OVHcloud account",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "home",
+					Usage: "Open the logs home page",
+					Action: func(ctx *cli.Context, b bool) error {
+						if ctx.Bool("owstats") {
+							return fmt.Errorf("Can provide both --owstats and --home flag")
+						}
+						return nil
+					},
+				},
+				&cli.BoolFlag{
+					Name:  "owstats",
+					Usage: "Open the owstats page",
+					Action: func(ctx *cli.Context, b bool) error {
+						if ctx.Bool("home") {
+							return fmt.Errorf("Can provide both --owstats and --home flag")
+						}
+						return nil
+					},
+				},
+			},
+			Action: func(cCtx *cli.Context) error {
+				err := config.GlobalOpts.Validate()
+				if err != nil {
+					return err
+				}
+
+				client, err := api.NewClient(config.GlobalOpts.Region)
+				if err != nil {
+					return err
+				}
+
+				c, err := cache.New("owh", "app.cache", nil)
+				if err != nil {
+					return err
+				}
+
+				return commands.Logs(client, c, cCtx.Bool("home"), cCtx.Bool("owstats"))
 			},
 		},
 		{
