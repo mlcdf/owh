@@ -32,7 +32,7 @@ jobs:
           export GOOS=windows GOARCH=amd64 && go build -o "owh-${VERSION}-${GOOS}-${GOARCH}.exe" -ldflags "${LDFLAGS}"
 
       - name: Upload release artifacts
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
