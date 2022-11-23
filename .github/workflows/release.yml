@@ -32,13 +32,13 @@ jobs:
           GOOS=windows GOARCH=amd64; go build -o "owh-${VERSION}-${GOOS}-${GOARCH}.exe" -ldflags "${LDFLAGS}"
 
       - name: Upload release artifacts
-        uses: actions/github-script@v3
+        uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require("fs").promises;
             const { repo: { owner, repo }, sha } = context;
-            const release = await github.repos.getReleaseByTag({
+            const release = await github.rest.repos.getReleaseByTag({
               owner, repo,
               tag: process.env.GITHUB_REF.replace("refs/tags/", ""),
             });
@@ -46,7 +46,7 @@ jobs:
             for (let file of await fs.readdir(".")) {
               if (!file.startsWith("owh-")) continue;
               console.log("Uploading", file);
-              await github.repos.uploadReleaseAsset({
+              await github.rest.repos.uploadReleaseAsset({
                 owner, repo,
                 release_id: release.data.id,
                 name: file,
