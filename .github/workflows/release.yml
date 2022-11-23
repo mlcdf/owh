@@ -9,6 +9,9 @@ jobs:
     name: Upload Release Asset
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
@@ -16,20 +19,17 @@ jobs:
           check-latest: true
           cache: true
 
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
       - name: Build binaries
         run: |
           export VERSION=$(git describe --tags)
           export CGO_ENABLED=0
           export LDFLAGS="-X 'main.Version=${VERSION}'"
 
-          GOOS=linux GOARCH=amd64; go build -v -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags "${LDFLAGS}"
-          GOOS=linux GOARCH=arm; GOARM=6 go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags "${LDFLAGS}"
-          GOOS=linux GOARCH=arm64; go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags "${LDFLAGS}"
-          GOOS=darwin GOARCH=amd64; go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags "${LDFLAGS}"
-          GOOS=windows GOARCH=amd64; go build -o "owh-${VERSION}-${GOOS}-${GOARCH}.exe" -ldflags "${LDFLAGS}"
+          export GOOS=linux GOARCH=amd64 && go build -v -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags "${LDFLAGS}"
+          export GOOS=linux GOARCH=arm GOARM=6 && go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags "${LDFLAGS}"
+          export GOOS=linux GOARCH=arm64 && go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags "${LDFLAGS}"
+          export GOOS=darwin GOARCH=amd64 && go build -o "owh-${VERSION}-${GOOS}-${GOARCH}" -ldflags "${LDFLAGS}"
+          export GOOS=windows GOARCH=amd64 && go build -o "owh-${VERSION}-${GOOS}-${GOARCH}.exe" -ldflags "${LDFLAGS}"
 
       - name: Upload release artifacts
         uses: actions/github-script@v5
