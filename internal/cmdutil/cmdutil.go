@@ -45,6 +45,10 @@ func Special(str string) string {
 	return lipgloss.NewStyle().Foreground(StyleSpecial).Render(str)
 }
 
+func Bold(str string) string {
+	return lipgloss.NewStyle().Bold(true).Render(str)
+}
+
 func PrintTable(title string, rows [][]string, cols ...string) error {
 	str, err := Table(title, rows, cols...)
 	if err != nil {
@@ -73,7 +77,7 @@ func Table(title string, rows [][]string, cols ...string) (string, error) {
 	table := tablewriter.NewWriter(tableString)
 
 	if title != "" {
-		fmt.Println(lipgloss.NewStyle().Bold(true).Render(title))
+		fmt.Println(Bold(title))
 	}
 
 	if len(cols) > 0 {
@@ -114,7 +118,7 @@ func DescriptionTable(title string, rows []LabelValue) {
 	leftColumn := lipgloss.NewStyle().Width(leftColumnSize + 2).PaddingLeft(2)
 
 	if title != "" {
-		fmt.Println(lipgloss.NewStyle().Bold(true).Render(title))
+		fmt.Println(Bold(title))
 	}
 
 	for _, row := range rows {

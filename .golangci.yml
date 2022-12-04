@@ -21,3 +21,4 @@ linters:
   - gomnd
   - gochecknoglobals
   - gosec
+  - paralleltest

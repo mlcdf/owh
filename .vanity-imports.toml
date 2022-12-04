@@ -1,0 +1,23 @@
+domain = "go.mlcdf.fr"
+output = "deploy"
+
+[index]
+title = "Go Modules — mlcdf"
+
+[repos]
+
+[repos."/sc-backup"]
+repo = "https://github.com/mlcdf/sc-backup"
+vcs = "git"
+
+[repos."/dyndns"]
+repo = "https://github.com/mlcdf/dyndns"
+vcs = "git"
+
+[repos."/vanity-imports"]
+repo = "https://github.com/mlcdf/vanity-imports"
+vcs = "git"
+
+[repos."/sally"]
+repo = "https://github.com/mlcdf/sally"
+vcs = "git"

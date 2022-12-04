@@ -12,12 +12,12 @@ import (
 	"go.mlcdf.fr/owh/internal/api"
 	"go.mlcdf.fr/owh/internal/cmdutil"
 	"go.mlcdf.fr/owh/internal/config"
+	"go.mlcdf.fr/owh/internal/remotefs"
 	"go.mlcdf.fr/sally/logging"
-	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 )
 
-func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
+func NewSSHClient(client *api.Client, hosting string) (*remotefs.Client, error) {
 	hostingInfo, err := client.GetHosting(hosting)
 	if err != nil {
 		return nil, err
@@ -92,32 +92,18 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 		}
 	}
 
-	config := ssh.ClientConfig{
-		Config:          ssh.Config{},
-		User:            credentials.User,
-		Auth:            []ssh.AuthMethod{ssh.Password(credentials.Password)},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         10 * time.Second,
-	}
-
-	addr := fmt.Sprintf("%s:%d", hostingInfo.ServiceManagementAccess.SSH.URL, hostingInfo.ServiceManagementAccess.SSH.Port)
-	logging.Debugf(
-		"ssh %s -l %s (passwd: %s)",
-		strings.ReplaceAll(addr, ":22", ""),
-		credentials.User, credentials.Password,
+	conn, err := remotefs.Connect(
+		hostingInfo.ServiceManagementAccess.SSH.URL,
+		hostingInfo.ServiceManagementAccess.SSH.Port,
+		credentials.User,
+		credentials.Password,
 	)
 
-	var conn *ssh.Client
-
-	conn, err = ssh.Dial("tcp", addr, &config)
 	if err != nil {
-		time.Sleep(5 * time.Second)
-
-		conn, err = ssh.Dial("tcp", addr, &config)
-		if err != nil {
-			return nil, xerrors.Errorf("failed to connect to [%s]: %w\n", addr, err)
-		}
+		return nil, err
 	}
+
+	logging.Debugf(conn.SSHPass())
 
 	return conn, nil
 }

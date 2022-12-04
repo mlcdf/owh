@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -105,18 +104,9 @@ func nuke(client *api.Client, hosting string, domain *api.AttachedDomain) error 
 		return err
 	}
 
-	session, err := conn.NewSession()
+	err = conn.ForceRemove(domain.Path)
 	if err != nil {
-		return err
-	}
-	defer session.Close()
-
-	var b bytes.Buffer
-	session.Stdout = &b
-
-	err = session.Run(fmt.Sprintf("rm -rf %s", domain.Path))
-	if err != nil {
-		return xerrors.Errorf("failed to run command: %s : %w", b.String(), err)
+		return xerrors.Errorf("failed remove %s : %w", domain.Path, err)
 	}
 
 	err = client.DeleteDomain(hosting, domain.Domain)

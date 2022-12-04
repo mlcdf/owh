@@ -48,8 +48,34 @@ GLOBAL OPTIONS:
    --version, -v  print the version (default: false)
 ```
 
-## TODO
+## Developement
 
-MVP:
-- Uniformize terminal output across all commands (color, style, stderr/stdout)
-- Add tests
+Requirements:
+- go version > 1.19+
+- docker
+
+Run the app
+
+```sh
+go run main.go
+```
+
+Run the tests
+
+```sh
+go test ./...
+```
+
+Force `go test` to run all the tests (by disabling caching)
+```sh
+./scrits/test.sh
+```
+
+## Tools
+
+- check domains
+- ci
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)

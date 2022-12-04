@@ -7,11 +7,14 @@ import (
 	"os"
 
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/confluentinc/bincover"
 	"github.com/urfave/cli/v2"
 	"go.mlcdf.fr/owh/internal/api"
 	"go.mlcdf.fr/owh/internal/cmdutil"
 	"go.mlcdf.fr/owh/internal/commands"
+	"go.mlcdf.fr/owh/internal/commands/tool"
 	"go.mlcdf.fr/owh/internal/config"
+	"go.mlcdf.fr/owh/internal/test"
 	"go.mlcdf.fr/sally/cache"
 	"go.mlcdf.fr/sally/logging"
 )
@@ -23,6 +26,14 @@ func main() {
 
 	cli.VersionPrinter = func(cCtx *cli.Context) {
 		commands.Version(Version)
+	}
+
+	cli.OsExiter = func(code int) {
+		if test.IsTest == "true" {
+			bincover.ExitCode = code
+		} else {
+			os.Exit(code)
+		}
 	}
 
 	app := cli.NewApp()
@@ -275,7 +286,7 @@ func main() {
 					Usage: "Open the logs home page",
 					Action: func(ctx *cli.Context, b bool) error {
 						if ctx.Bool("owstats") {
-							return fmt.Errorf("Can provide both --owstats and --home flag")
+							return fmt.Errorf("Can't provide both --owstats and --home flag")
 						}
 						return nil
 					},
@@ -285,7 +296,7 @@ func main() {
 					Usage: "Open the owstats page",
 					Action: func(ctx *cli.Context, b bool) error {
 						if ctx.Bool("home") {
-							return fmt.Errorf("Can provide both --owstats and --home flag")
+							return fmt.Errorf("Can't provide both --owstats and --home flag")
 						}
 						return nil
 					},
@@ -470,6 +481,64 @@ func main() {
 				return commands.Whoami(client)
 			},
 		},
+		{
+			Name:  "tool",
+			Usage: "Show info about the user currently logged in",
+			Subcommands: []*cli.Command{
+				{
+					Name:  "check",
+					Usage: "check for DNS/SSL issues",
+					Action: func(cCtx *cli.Context) error {
+						err := config.GlobalOpts.Validate()
+						if err != nil {
+							return err
+						}
+
+						client, err := api.NewClient(config.GlobalOpts.Region)
+						if err != nil {
+							return err
+						}
+
+						return tool.Check(client)
+					},
+				},
+				{
+					Name:  "ci",
+					Usage: "a helper for CI pipelines",
+					Action: func(cCtx *cli.Context) error {
+						err := config.GlobalOpts.Validate()
+						if err != nil {
+							return err
+						}
+
+						client, err := api.NewClient(config.GlobalOpts.Region)
+						if err != nil {
+							return err
+						}
+
+						return tool.CI(client)
+					},
+				},
+				{
+					Name:        "ssh",
+					Usage:       "Start an interactive session into your hosting",
+					Description: "This commands relies on sshpass and ssh, be sure they're installed.",
+					Action: func(cCtx *cli.Context) error {
+						err := config.GlobalOpts.Validate()
+						if err != nil {
+							return err
+						}
+
+						client, err := api.NewClient(config.GlobalOpts.Region)
+						if err != nil {
+							return err
+						}
+
+						return tool.SSH(client)
+					},
+				},
+			},
+		},
 	}
 
 	app.Before = func(ctx *cli.Context) error {
@@ -482,21 +551,26 @@ func main() {
 
 	app.ExitErrHandler = func(cCtx *cli.Context, err error) {
 		if err == nil {
-			os.Exit(0)
+			cli.OsExiter(0)
+			return
 		} else if err == cmdutil.ErrSilent || err == config.ErrFolderNotLinked || err == cmdutil.ErrFlag {
-			os.Exit(1)
+			cli.OsExiter(1)
+			return
 		} else if err == cmdutil.ErrCancel {
-			os.Exit(2)
+			cli.OsExiter(2)
+			return
 		} else if errors.Is(err, terminal.InterruptErr) {
 			fmt.Fprint(os.Stderr, "\n")
-			os.Exit(2)
+			cli.OsExiter(2)
+			return
 		}
 
-		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		cli.OsExiter(1)
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		cli.OsExiter(1)
 	}
 }

@@ -1,8 +1,6 @@
 #!/bin/bash
 set -eu -o pipefail
 
-docker build . \
-    -t test \
-    -f Dockerfile.test
-
-docker run -it -v $(pwd):/app -e VENOM_VAR_owh=/tests/owh-test test 
+docker run --name owh-test --rm -d -i -t -v $(pwd):/app golang:1.19.3-bullseye bash
+docker exec -w /app owh-test go test ./...
+docker kill owh-test
