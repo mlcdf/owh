@@ -11,6 +11,7 @@ import (
 	"go.mlcdf.fr/owh/internal/api"
 	"go.mlcdf.fr/owh/internal/cmdutil"
 	"go.mlcdf.fr/owh/internal/commands"
+	"go.mlcdf.fr/owh/internal/commands/tool"
 	"go.mlcdf.fr/owh/internal/config"
 	"go.mlcdf.fr/sally/cache"
 	"go.mlcdf.fr/sally/logging"
@@ -468,6 +469,46 @@ func main() {
 				}
 
 				return commands.Whoami(client)
+			},
+		},
+		{
+			Name:  "tool",
+			Usage: "Show info about the user currently logged in",
+			Subcommands: []*cli.Command{
+				{
+					Name:  "check",
+					Usage: "check for DNS/SSL issues",
+					Action: func(cCtx *cli.Context) error {
+						err := config.GlobalOpts.Validate()
+						if err != nil {
+							return err
+						}
+
+						client, err := api.NewClient(config.GlobalOpts.Region)
+						if err != nil {
+							return err
+						}
+
+						return tool.Check(client)
+					},
+				},
+				{
+					Name:  "ci",
+					Usage: "a helper for CI pipelines",
+					Action: func(cCtx *cli.Context) error {
+						err := config.GlobalOpts.Validate()
+						if err != nil {
+							return err
+						}
+
+						client, err := api.NewClient(config.GlobalOpts.Region)
+						if err != nil {
+							return err
+						}
+
+						return tool.CI(client)
+					},
+				},
 			},
 		},
 	}
