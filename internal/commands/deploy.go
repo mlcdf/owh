@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/pkg/sftp"
 	"go.mlcdf.fr/owh/internal/api"
 	"go.mlcdf.fr/owh/internal/cmdutil"
 	"go.mlcdf.fr/owh/internal/config"
@@ -76,13 +75,7 @@ func Deploy(client *api.Client, options *DeployOptions) error {
 		return xerrors.Errorf("failed to connect ssh: %w", err)
 	}
 
-	sftClient, err := sftp.NewClient(conn)
-	if err != nil {
-		return xerrors.Errorf("error creating a new sftp client: %w", err)
-	}
-	defer sftClient.Close()
-
-	err = flow.Sync(sftClient, options.Directory, l.CanonicalDomain)
+	err = conn.Sync(options.Directory, l.CanonicalDomain)
 	if err != nil {
 		return err
 	}
