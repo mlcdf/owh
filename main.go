@@ -276,7 +276,7 @@ func main() {
 					Usage: "Open the logs home page",
 					Action: func(ctx *cli.Context, b bool) error {
 						if ctx.Bool("owstats") {
-							return fmt.Errorf("Can provide both --owstats and --home flag")
+							return fmt.Errorf("Can't provide both --owstats and --home flag")
 						}
 						return nil
 					},
@@ -286,7 +286,7 @@ func main() {
 					Usage: "Open the owstats page",
 					Action: func(ctx *cli.Context, b bool) error {
 						if ctx.Bool("home") {
-							return fmt.Errorf("Can provide both --owstats and --home flag")
+							return fmt.Errorf("Can't provide both --owstats and --home flag")
 						}
 						return nil
 					},

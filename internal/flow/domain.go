@@ -105,9 +105,9 @@ func DetachDomain(client *api.Client, hosting string, domain string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Domains %s and %s Detached\n", cmdutil.Highlight(hosting), cmdutil.Highlight(suggestedDomain))
+		fmt.Printf("Domains %s and %s detached\n", cmdutil.Highlight(domain), cmdutil.Highlight(suggestedDomain))
 	} else {
-		fmt.Printf("Domain %s Detached\n", cmdutil.Highlight(hosting))
+		fmt.Printf("Domain %s detached\n", cmdutil.Highlight(hosting))
 	}
 
 	return nil
