@@ -45,7 +45,7 @@ func (c *RemoveCommand) Run(args []string) int {
 
 	flags.StringVar(&hosting, "hosting", "", "")
 	flags.StringVar(&domain, "domain", "", "")
-	flags.BoolVar(&yes, "domain", false, "")
+	flags.BoolVar(&yes, "yes", false, "")
 
 	if err := flags.Parse(args); err != nil {
 		return c.View.PrintErr(err)
