@@ -1,0 +1,66 @@
+- request:
+    path: /1.0/auth/time
+    method: GET
+    headers:
+      Host: eu.api.ovh.com
+  response:
+    status: 200
+    body: 1670609715
+
+- request:
+    path: /1.0/auth/currentCredential
+    method: GET
+    headers:
+      Host: eu.api.ovh.com
+  response:
+    status: 200
+    headers:
+      Content-Type: application/json
+    body: |
+      {
+        "allowedIPs": null,
+        "applicationId": 666,
+        "creation": "2022-11-06T20:52:41+01:00",
+        "credentialId": 666,
+        "expiration": null,
+        "lastUse": "2022-12-09T19:13:18+01:00",
+        "ovhSupport": false,
+        "rules": [
+          {
+            "method": "GET",
+            "path": "/*"
+          },
+          {
+            "method": "POST",
+            "path": "/*"
+          },
+          {
+            "method": "PUT",
+            "path": "/*"
+          },
+          {
+            "method": "DELETE",
+            "path": "/*"
+          }
+        ],
+        "status": "validated"
+      }
+
+- request:
+    path: /1.0/me
+    method: GET
+    headers:
+      Host: eu.api.ovh.com
+  response:
+    status: 200
+    headers:
+      Content-Type: application/json
+    body: |
+      {
+        "name": "Le Conte des Floris",
+        "email": "test@example.com",
+        "firstname": "Maxime",
+        "nichandle": "xxxxxxx"
+      }
+
+

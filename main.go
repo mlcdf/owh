@@ -1,543 +1,167 @@
 package main
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"sort"
+	"strings"
 
-	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/urfave/cli/v2"
 	"go.mlcdf.fr/owh/internal/api"
-	"go.mlcdf.fr/owh/internal/cmdutil"
-	"go.mlcdf.fr/owh/internal/commands"
-	"go.mlcdf.fr/owh/internal/commands/tool"
+	"go.mlcdf.fr/owh/internal/command"
 	"go.mlcdf.fr/owh/internal/config"
+	"go.mlcdf.fr/owh/internal/view"
 	"go.mlcdf.fr/sally/cache"
-	"go.mlcdf.fr/sally/logging"
+
+	"github.com/mattn/go-isatty"
+	"github.com/mitchellh/cli"
 )
 
 var Version = "(devel)"
 
+func HelpFunc(app, description string) cli.HelpFunc {
+	return func(commands map[string]cli.CommandFactory) string {
+		var buf bytes.Buffer
+		buf.WriteString(fmt.Sprintf(
+			"Usage: %s [--version] [--help] <command> [<args>]\n\n",
+			app))
+		buf.WriteString(fmt.Sprintf("%s\n\n", description))
+		buf.WriteString("Available commands are:\n")
+
+		// Get the list of keys so we can sort them, and also get the maximum
+		// key length so they can be aligned properly.
+		keys := make([]string, 0, len(commands))
+		maxKeyLen := 0
+		for key := range commands {
+			if len(key) > maxKeyLen {
+				maxKeyLen = len(key)
+			}
+
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			commandFunc, ok := commands[key]
+			if !ok {
+				// This should never happen since we JUST built the list of
+				// keys.
+				panic("command not found: " + key)
+			}
+
+			command, err := commandFunc()
+			if err != nil {
+				log.Printf("[ERR] cli: Command '%s' failed to load: %s",
+					key, err)
+				continue
+			}
+
+			key = fmt.Sprintf("%s%s", key, strings.Repeat(" ", maxKeyLen-len(key)))
+			buf.WriteString(fmt.Sprintf("    %s    %s\n", key, command.Synopsis()))
+		}
+
+		return buf.String()
+	}
+}
+
 func main() {
-	log.SetFlags(0)
-
-	cli.VersionPrinter = func(cCtx *cli.Context) {
-		commands.Version(Version)
+	app := &command.App{
+		IsInteractive:    isatty.IsTerminal(os.Stdout.Fd()),
+		LinkFunc:         config.EnsureLink,
+		APIClientFactory: api.NewClient,
+		HTTPClient:       http.DefaultClient,
+		View:             &view.View{Writer: os.Stdout},
 	}
 
-	app := cli.NewApp()
+	var err error
 
-	app.Name = "owh"
-	app.Usage = "Deploy to OVHcloud Web Hosting"
-	app.EnableBashCompletion = true
-	app.Version = Version
-	app.Flags = []cli.Flag{
-		&cli.BoolFlag{
-			Name:    "debug",
-			Usage:   "enable verbose output",
-			Aliases: []string{"d"},
-		},
-	}
-	app.HideHelpCommand = true
-	app.Commands = []*cli.Command{
-		{
-			Name:  "config",
-			Usage: "Show the owh configuration file location",
-			Flags: []cli.Flag{
-				&cli.BoolFlag{
-					Name:        "env",
-					Usage:       "Print the configuration as environnement variable (useful for CI)",
-					Destination: new(bool),
-					Value:       false,
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				return commands.Config(cCtx.Bool("env"))
-			},
-		},
-		{
-			Name:  "deploy",
-			Usage: "Deploy websites from a directory",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "dir",
-					Usage:       "dir",
-					Destination: new(string),
-					Value:       ".",
-				},
-				&cli.BoolFlag{
-					Name:        "www",
-					Usage:       "Also attach www/non-www domain",
-					Destination: new(bool),
-					Value:       false,
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				options := &commands.DeployOptions{
-					Directory: cCtx.String("dir"),
-					WWW:       cCtx.Bool("www"),
-				}
-
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Deploy(client, options)
-			},
-		},
-		{
-			Name:  "domains",
-			Usage: "List domains attached to a hosting",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.ListDomains(client, cCtx.String("hosting"))
-			},
-		},
-		{
-			Name:  "domains:attach",
-			Usage: "Attach a domain",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-				&cli.StringFlag{
-					Name:        "domain",
-					Usage:       "domain",
-					Destination: new(string),
-				},
-				&cli.BoolFlag{
-					Name:        "www",
-					Usage:       "Also attach www/non-www domain",
-					Destination: new(bool),
-					Value:       false,
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.AttachDomain(client, cCtx.String("hosting"), cCtx.String("domain"))
-			},
-		},
-		{
-			Name:  "domains:detach",
-			Usage: "Detach a domain",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-				&cli.StringFlag{
-					Name:        "domain",
-					Usage:       "domain",
-					Destination: new(string),
-				},
-				&cli.BoolFlag{
-					Name:        "www",
-					Usage:       "Also detach www/non-www domain",
-					Destination: new(bool),
-					Value:       false,
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.DetachDomain(client, cCtx.String("hosting"), cCtx.String("domain"))
-			},
-		},
-		{
-			Name:  "hostings",
-			Usage: "List all your hostings",
-			Action: func(cCtx *cli.Context) error {
-				var hosting string
-
-				if cCtx.Args().Len() == 1 {
-					hosting = cCtx.Args().First()
-				}
-
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Hosting(client, hosting)
-			},
-		},
-		{
-			Name:  "info",
-			Usage: "Show info about the linked website",
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Info(client)
-			},
-		},
-		{
-			Name:  "link",
-			Usage: "Link current directory to an existing website on OVHcloud",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-				&cli.StringFlag{
-					Name:        "domain",
-					Usage:       "domain",
-					Destination: new(string),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Link(client, cCtx.String("hosting"), cCtx.String("domain"))
-			},
-		},
-		{
-			Name:  "login",
-			Usage: "Login to your OVHcloud account",
-			Action: func(cCtx *cli.Context) error {
-				return commands.Login()
-			},
-		},
-		{
-			Name:  "logs",
-			Usage: "View access logs",
-			Flags: []cli.Flag{
-				&cli.BoolFlag{
-					Name:  "home",
-					Usage: "Open the logs home page",
-					Action: func(ctx *cli.Context, b bool) error {
-						if ctx.Bool("owstats") {
-							return fmt.Errorf("Can't provide both --owstats and --home flag")
-						}
-						return nil
-					},
-				},
-				&cli.BoolFlag{
-					Name:  "owstats",
-					Usage: "Open the owstats page",
-					Action: func(ctx *cli.Context, b bool) error {
-						if ctx.Bool("home") {
-							return fmt.Errorf("Can't provide both --owstats and --home flag")
-						}
-						return nil
-					},
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				c, err := cache.New("owh", "app.cache", nil)
-				if err != nil {
-					return err
-				}
-
-				return commands.Logs(client, c, cCtx.Bool("home"), cCtx.Bool("owstats"))
-			},
-		},
-		{
-			Name:  "open",
-			Usage: "Open browser to current deployed website",
-			Action: func(cCtx *cli.Context) error {
-				return commands.Open()
-			},
-		},
-		{
-			Name:    "remove",
-			Aliases: []string{"rm"},
-			Usage:   "Remove websites (files & attached domains)",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-				&cli.BoolFlag{
-					Name:        "yes",
-					Usage:       "Bypass confirmation prompts",
-					Destination: new(bool),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Remove(client, cCtx.String("hosting"), cCtx.Args().First(), cCtx.Bool("yes"))
-			},
-		},
-		{
-			Name:  "tasks",
-			Usage: "List tasks",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Tasks(client, cCtx.String("hosting"))
-			},
-		},
-		{
-			Name:  "users",
-			Usage: "List ssh/ftp users",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Users(client, cCtx.String("hosting"))
-			},
-		},
-		{
-			Name:  "users:changepass",
-			Usage: "Change ssh/ftp users password",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-				&cli.StringFlag{
-					Name:        "user",
-					Usage:       "user",
-					Destination: new(string),
-				},
-				&cli.StringFlag{
-					Name:        "password",
-					Usage:       "password",
-					Destination: new(string),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.ChangePassword(client, cCtx.String("hosting"), cCtx.String("user"), cCtx.String("password"))
-			},
-		},
-		{
-			Name:  "users:delete",
-			Usage: "Delete ssh/ftp users",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "hosting",
-					Usage:       "hosting",
-					Destination: new(string),
-				},
-			},
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.DeleteUser(client, cCtx.String("hosting"), cCtx.Args().First())
-			},
-		},
-		{
-			Name:  "whoami",
-			Usage: "Show info about the user currently logged in",
-			Action: func(cCtx *cli.Context) error {
-				err := config.GlobalOpts.Validate()
-				if err != nil {
-					return err
-				}
-
-				client, err := api.NewClient(config.GlobalOpts.Region)
-				if err != nil {
-					return err
-				}
-
-				return commands.Whoami(client)
-			},
-		},
-		{
-			Name:  "tool",
-			Usage: "Show info about the user currently logged in",
-			Subcommands: []*cli.Command{
-				{
-					Name:  "check",
-					Usage: "check for DNS/SSL issues",
-					Action: func(cCtx *cli.Context) error {
-						err := config.GlobalOpts.Validate()
-						if err != nil {
-							return err
-						}
-
-						client, err := api.NewClient(config.GlobalOpts.Region)
-						if err != nil {
-							return err
-						}
-
-						return tool.Check(client)
-					},
-				},
-				{
-					Name:  "ci",
-					Usage: "a helper for CI pipelines",
-					Action: func(cCtx *cli.Context) error {
-						err := config.GlobalOpts.Validate()
-						if err != nil {
-							return err
-						}
-
-						client, err := api.NewClient(config.GlobalOpts.Region)
-						if err != nil {
-							return err
-						}
-
-						return tool.CI(client)
-					},
-				},
-			},
-		},
-	}
-
-	app.Before = func(ctx *cli.Context) error {
-		if ctx.Bool("debug") {
-			logging.SetLevel(logging.ERROR)
-		}
-
-		return config.New()
-	}
-
-	app.ExitErrHandler = func(cCtx *cli.Context, err error) {
-		if err == nil {
-			os.Exit(0)
-		} else if err == cmdutil.ErrSilent || err == config.ErrFolderNotLinked || err == cmdutil.ErrFlag {
-			os.Exit(1)
-		} else if err == cmdutil.ErrCancel {
-			os.Exit(2)
-		} else if errors.Is(err, terminal.InterruptErr) {
-			fmt.Fprint(os.Stderr, "\n")
-			os.Exit(2)
-		}
-
-		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
+	app.Config, err = config.New(app.IsInteractive)
+	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
+	cli := cli.CLI{
+		Args:         os.Args[1:],
+		Name:         "owh",
+		Version:      Version,
+		Autocomplete: true,
+		HelpWriter:   os.Stdout,
+		HelpFunc:     HelpFunc("owh", "Deploy websites to OVHcloud Web Hosting."),
+		Commands: map[string]cli.CommandFactory{
+			"deploy": func() (cli.Command, error) {
+				return &command.DeployCommand{App: *app}, nil
+			},
+			"domains": func() (cli.Command, error) {
+				return &command.DomainsCommand{App: *app}, nil
+			},
+			"domains attach": func() (cli.Command, error) {
+				return &command.AttachCommand{App: *app}, nil
+			},
+			"domains detach": func() (cli.Command, error) {
+				return &command.DetachCommand{App: *app}, nil
+			},
+			"hostings": func() (cli.Command, error) {
+				return &command.HostingsCommand{App: *app}, nil
+			},
+			"info": func() (cli.Command, error) {
+				return &command.InfoCommand{App: *app}, err
+			},
+			"link": func() (cli.Command, error) {
+				return &command.LinkCommand{App: *app}, nil
+			},
+			"login": func() (cli.Command, error) {
+				return &command.LoginCommand{App: *app}, nil
+			},
+			"logs": func() (cli.Command, error) {
+				return &command.LogsCommand{
+					App: *app,
+					CacheFactory: func() (cache.Cache, error) {
+						return cache.New("owh", "app.cache", nil)
+					},
+				}, nil
+			},
+			"open": func() (cli.Command, error) {
+				return &command.OpenCommand{App: *app}, nil
+			},
+			"remove": func() (cli.Command, error) {
+				return &command.RemoveCommand{App: *app}, nil
+			},
+			"tasks": func() (cli.Command, error) {
+				return &command.TasksCommand{App: *app}, nil
+			},
+			"tool": func() (cli.Command, error) {
+				return &command.ToolCommand{App: *app}, nil
+			},
+			"tool ci": func() (cli.Command, error) {
+				return &command.CICommand{App: *app}, nil
+			},
+			"tool ssh": func() (cli.Command, error) {
+				return &command.SSHCommand{App: *app}, nil
+			},
+			"users": func() (cli.Command, error) {
+				return &command.UsersCommand{App: *app}, nil
+			},
+			"users changepass": func() (cli.Command, error) {
+				return &command.UsersChangePassCommand{App: *app}, nil
+			},
+			"users remove": func() (cli.Command, error) {
+				return &command.UsersRemoveCommand{App: *app}, nil
+			},
+			"whoami": func() (cli.Command, error) {
+				return &command.WhoamiCommand{App: *app}, nil
+			},
+		},
 	}
+
+	code, err := cli.Run()
+
+	if err != nil {
+		fmt.Fprintf(os.Stdout, "Error executing CLI: %s\n", err)
+		os.Exit(1)
+	}
+
+	os.Exit(code)
 }

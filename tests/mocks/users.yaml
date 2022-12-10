@@ -1,0 +1,162 @@
+- request:
+    path: /1.0/auth/time
+    method: GET
+    headers:
+      Host: eu.api.ovh.com
+  response:
+    status: 200
+    body: 1670609715
+
+- request:
+    path: /1.0/auth/currentCredential
+    method: GET
+    headers:
+      Host: eu.api.ovh.com
+  response:
+    status: 200
+    headers:
+      Content-Type: application/json
+    body: |
+      {
+        "allowedIPs": null,
+        "applicationId": 666,
+        "creation": "2022-11-06T20:52:41+01:00",
+        "credentialId": 666,
+        "expiration": null,
+        "lastUse": "2022-12-09T19:13:18+01:00",
+        "ovhSupport": false,
+        "rules": [
+          {
+            "method": "GET",
+            "path": "/*"
+          },
+          {
+            "method": "POST",
+            "path": "/*"
+          },
+          {
+            "method": "PUT",
+            "path": "/*"
+          },
+          {
+            "method": "DELETE",
+            "path": "/*"
+          }
+        ],
+        "status": "validated"
+      }
+
+- request:
+    path: /1.0/hosting/web/asterix.cluster031.hosting.ovh.net/user
+    method: GET
+    headers:
+      Host: eu.api.ovh.com
+      X-Ovh-Consumer: yolo
+  response:
+    status: 200
+    headers:
+      Content-Type: application/json
+    body: |
+      [
+          "asterix-owh",
+          "asterix"
+      ]
+
+- request:
+    path: /1.0/hosting/web/asterix.cluster031.hosting.ovh.net
+    method: GET
+    headers:
+      X-Ovh-Consumer: yolo
+  response:
+    status: 200
+    headers:
+      Content-Type: application/json
+    body: |
+      {
+        "datacenter": "gra3",
+        "hasHostedSsl": false,
+        "phpVersions": [
+          {
+            "support": "END_OF_LIFE",
+            "version": "5.4"
+          },
+          {
+            "support": "END_OF_LIFE",
+            "version": "5.5"
+          },
+          {
+            "support": "END_OF_LIFE",
+            "version": "5.6"
+          },
+          {
+            "support": "END_OF_LIFE",
+            "version": "7.0"
+          },
+          {
+            "support": "END_OF_LIFE",
+            "version": "7.1"
+          },
+          {
+            "support": "END_OF_LIFE",
+            "version": "7.2"
+          },
+          {
+            "support": "END_OF_LIFE",
+            "version": "7.3"
+          },
+          {
+            "support": "SUPPORTED",
+            "version": "7.4"
+          },
+          {
+            "support": "SUPPORTED",
+            "version": "8.0"
+          },
+          {
+            "support": "SUPPORTED",
+            "version": "8.1"
+          }
+        ],
+        "quotaUsed": {
+          "unit": "MB",
+          "value": 9.514808654785156
+        },
+        "recommendedOffer": null,
+        "serviceManagementAccess": {
+          "ftp": {
+            "port": 21,
+            "url": "ftp.cluster031.hosting.ovh.net"
+          },
+          "http": {
+            "port": 80,
+            "url": "asterix.cluster031.hosting.ovh.net"
+          },
+          "ssh": {
+            "port": 22,
+            "url": "ssh.cluster031.hosting.ovh.net"
+          }
+        },
+        "trafficQuotaUsed": null,
+        "updates": [],
+        "serviceName": "asterix.cluster031.hosting.ovh.net",
+        "cluster": "cluster031",
+        "offer": "pro2014",
+        "resourceType": "shared",
+        "state": "active",
+        "home": "/homexxx/asterix",
+        "filer": "xxx",
+        "primaryLogin": "asterix",
+        "hasCdn": false,
+        "boostOffer": null,
+        "displayName": null,
+        "clusterIp": "146.59.209.152",
+        "clusterIpv6": "2001:41d0:301::31",
+        "hostingIp": "146.59.209.152",
+        "hostingIpv6": "2001:41d0:301::31",
+        "quotaSize": {
+          "unit": "GB",
+          "value": 250
+        },
+        "operatingSystem": "linux",
+        "trafficQuotaSize": null
+      }

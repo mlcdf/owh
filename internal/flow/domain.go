@@ -58,7 +58,7 @@ func attachDomain(client *api.Client, hosting string, domain string, path string
 	if err != nil {
 		var e *ovh.APIError
 		if errors.As(err, &e) && e.Code == http.StatusNotFound {
-			err := client.PostDomain(hosting, domain)
+			_, err := client.PostDomain(hosting, domain)
 			if err == nil {
 				return nil
 			}
@@ -95,13 +95,13 @@ func DetachDomain(client *api.Client, hosting string, domain string) error {
 		return err
 	}
 
-	err = client.DeleteDomain(hosting, domain)
+	_, err = client.DeleteDomain(hosting, domain)
 	if err != nil {
 		return err
 	}
 
 	if addSuggestedDomain {
-		err = client.DeleteDomain(hosting, suggestedDomain)
+		_, err = client.DeleteDomain(hosting, suggestedDomain)
 		if err != nil {
 			return err
 		}

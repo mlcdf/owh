@@ -211,7 +211,7 @@ func (client *Client) UpdateDomain(hosting string, domain string) error {
 	return nil
 }
 
-func (client *Client) PostDomain(hosting string, domain string) error {
+func (client *Client) PostDomain(hosting string, domain string) (int64, error) {
 	var task *Task
 
 	attachedDomain := &AttachedDomain{
@@ -223,32 +223,22 @@ func (client *Client) PostDomain(hosting string, domain string) error {
 
 	err := client.Post(fmt.Sprintf("/hosting/web/%s/attachedDomain", hosting), attachedDomain, &task)
 	if err != nil {
-		return xerrors.Errorf("failed to POST /hosting/web/%s/attachedDomain %s: %w", hosting, domain, err)
+		return 0, xerrors.Errorf("failed to POST /hosting/web/%s/attachedDomain %s: %w", hosting, domain, err)
 	}
 
-	err = client.WaitTaskDone(hosting, task.ID, "Attaching domain "+domain)
-	if err != nil {
-		return xerrors.Errorf("failed to attach domain: %w", err)
-	}
-
-	return nil
+	return task.ID, nil
 }
 
-func (client *Client) DeleteDomain(hosting string, domain string) error {
+func (client *Client) DeleteDomain(hosting string, domain string) (int64, error) {
 	url := fmt.Sprintf("/hosting/web/%s/attachedDomain/%s", hosting, domain)
 
 	var task Task
 	err := client.Delete(url, &task)
 	if err != nil {
-		return xerrors.Errorf("failed to DELETE %s: %w", url, err)
+		return 0, xerrors.Errorf("failed to DELETE %s: %w", url, err)
 	}
 
-	err = client.WaitTaskDone(hosting, task.ID, "Detaching domain")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return task.ID, nil
 }
 
 func (client *Client) ListUsers(hosting string) ([]string, error) {
@@ -274,7 +264,7 @@ func (client *Client) DeleteUser(hosting string, user string) error {
 	return nil
 }
 
-func (client *Client) ChangePassword(hosting string, user string, password string) error {
+func (client *Client) ChangePassword(hosting string, user string, password string) (int64, error) {
 	url := fmt.Sprintf("/hosting/web/%s/user/%s/changePassword", hosting, user)
 	payload := &SSHUser{
 		Password: password,
@@ -283,15 +273,10 @@ func (client *Client) ChangePassword(hosting string, user string, password strin
 
 	err := client.Post(url, payload, task)
 	if err != nil {
-		return xerrors.Errorf("failed to POST %s: %w", url, err)
+		return 0, xerrors.Errorf("failed to POST %s: %w", url, err)
 	}
 
-	err = client.WaitTaskDone(hosting, task.ID, "Updating password")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return task.ID, nil
 }
 
 func (client *Client) GetUserLogsToken(hosting string, ttl time.Duration) (string, error) {
