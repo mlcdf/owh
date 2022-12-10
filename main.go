@@ -135,6 +135,9 @@ func main() {
 			"tool": func() (cli.Command, error) {
 				return &command.ToolCommand{App: *app}, nil
 			},
+			"tool check": func() (cli.Command, error) {
+				return &command.CheckCommand{App: *app}, nil
+			},
 			"tool ci": func() (cli.Command, error) {
 				return &command.CICommand{App: *app}, nil
 			},
