@@ -9,7 +9,7 @@ PHP) websites.
 - It requires at least a Pro plan (for SSH access).
 - The underlying file system is made invisible: deploying a website with a domain www.example.com will upload the content to a www.example.com folder. This is by design and it can't be overridden.
 
-# Usage
+## Usage
 
 ```
 Usage: owh [--version] [--help] <command> [<args>]
