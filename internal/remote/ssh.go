@@ -93,13 +93,15 @@ func (c *Client) Sync(src string, dest string) error {
 	// Delete extra files
 	walker := client.Walk(dest)
 	for walker.Step() {
-		localpath, err := filepath.Rel(dest, walker.Path())
+		relpath, err := filepath.Rel(dest, walker.Path())
 
 		if err != nil {
 			return err
 		}
 
-		remotepath := filepath.Join(dest, localpath)
+		localpath := filepath.Join(src, relpath)
+
+		remotepath := filepath.Join(dest, relpath)
 
 		remotefile, err := client.Stat(remotepath)
 		if err != nil {
@@ -108,6 +110,8 @@ func (c *Client) Sync(src string, dest string) error {
 			}
 			return xerrors.Errorf("error while stat remote file %s: %w", remotepath, err)
 		}
+
+		fmt.Println(localpath)
 
 		localfile, err := os.Stat(localpath)
 		if err != nil {
@@ -130,7 +134,7 @@ func (c *Client) Sync(src string, dest string) error {
 		// Both are files
 		if !localfile.IsDir() && !remotefile.IsDir() {
 			if localfile.Size() == remotefile.Size() {
-				identical, err := isIdentical(localpath, remotepath)
+				identical, err := isIdentical(client, localpath, remotepath)
 				if err != nil {
 					return err
 				}
@@ -214,7 +218,7 @@ func (c *Client) ForceRemove(dest string) error {
 	return err
 }
 
-func isIdentical(path1, path2 string) (bool, error) {
+func isIdentical(client *sftp.Client, path1, path2 string) (bool, error) {
 	buffer := make([]byte, 10_000_000)
 	h1 := md5.New()
 	h2 := md5.New()
@@ -225,7 +229,7 @@ func isIdentical(path1, path2 string) (bool, error) {
 	}
 	defer f1.Close()
 
-	f2, err := os.Open(path2)
+	f2, err := client.Open(path2)
 	if err != nil {
 		return false, xerrors.Errorf("error opening file %s: %w", path2, err)
 	}
@@ -250,7 +254,7 @@ func isIdentical(path1, path2 string) (bool, error) {
 func createFile(client *sftp.Client, localpath, remotepath string) error {
 	remotef, err := client.Create(remotepath)
 	if err != nil {
-		return xerrors.Errorf("error creating %s: %w", localpath, err)
+		return xerrors.Errorf("error creating %s: %w", remotepath, err)
 	}
 
 	localf, err := os.Open(localpath)

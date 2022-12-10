@@ -46,9 +46,7 @@ func (c *DeployCommand) Run(args []string) int {
 		return c.View.PrintErr(err)
 	}
 
-	if flags.Arg(0) != "" {
-		directory = flags.Arg(0)
-	} else {
+	if directory = flags.Arg(0); directory == "" {
 		var err error
 
 		directory, err = os.Getwd()
