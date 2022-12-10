@@ -30,3 +30,7 @@ func Highlight(str string) string {
 func Special(str string) string {
 	return lipgloss.NewStyle().Foreground(StyleSpecial).Render(str)
 }
+
+func Bold(str string) string {
+	return lipgloss.NewStyle().Bold(true).Render(str)
+}

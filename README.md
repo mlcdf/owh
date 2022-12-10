@@ -8,8 +8,6 @@ PHP) websites.
 
 - It requires at least a Pro plan (for SSH access).
 - The underlying file system is made invisible: deploying a website with a domain www.example.com will upload the content to a www.example.com folder. This is by design and it can't be overridden.
-- A few operations are asynchronous and create a task on OVHcloud infrastructure that will be picked up by robots and executed. Therefore, some operations may take several seconds or more.
-- When attaching a domain to a hosting, you'll have to wait ~1h for the Let's Encrypt SSL certificates.
 
 # Usage
 
@@ -28,7 +26,7 @@ Available commands are:
     logs        View access logs
     open        Open browser to current deployed website
     remove      Remove websites (files & attached domains)
-    tasks       Lists tasks
+    tasks       List tasks
     tool        Group useful extra-commands
     users       Manage users
     whoami      Show info about the user currently logged in
@@ -56,11 +54,6 @@ Force `go test` to run all the tests (by disabling caching)
 ```sh
 ./scrits/test.sh
 ```
-
-## Tools
-
-- check domains
-- ci
 
 ## License
 

@@ -14,13 +14,13 @@ func (c *TasksCommand) Help() string {
 	helpText := `
 Usage: owh tasks
 
-  Lists tasks
+  Lists tasks.
 `
 	return strings.TrimSpace(helpText)
 }
 
 func (c *TasksCommand) Synopsis() string {
-	return "Lists tasks"
+	return "List tasks"
 }
 
 func (c *TasksCommand) Run(args []string) int {
