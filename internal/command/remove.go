@@ -22,7 +22,7 @@ func (c *RemoveCommand) Help() string {
 	helpText := `
 Usage: owh remove, rm [<options>]
 
-  Remove websites (files & attached domains).
+  Removes websites (files & attached domains).
 
 Options:
   --hosting       service name (if not set, you'll be prompt)

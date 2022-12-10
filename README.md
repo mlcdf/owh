@@ -26,7 +26,7 @@ Available commands are:
     logs        View access logs
     open        Open browser to current deployed website
     remove      Remove websites (files & attached domains)
-    tasks       Lists tasks
+    tasks       List tasks
     tool        Group useful extra-commands
     users       Manage users
     whoami      Show info about the user currently logged in

@@ -13,7 +13,7 @@ func (c *CICommand) Help() string {
 	helpText := `
 Usage: owh tool ci
 
-  Help you setup a deployment in CI.
+  Helps you setup a deployment in CI.
 
   /!\ This command will display secrets in the terminal.
 `
@@ -21,7 +21,7 @@ Usage: owh tool ci
 }
 
 func (c *CICommand) Synopsis() string {
-	return "Shows useful info to setup a CI"
+	return "Show useful info to setup a CI"
 }
 
 func (c *CICommand) Run(args []string) int {
