@@ -13,14 +13,19 @@ import (
 	"golang.org/x/xerrors"
 )
 
-var DefaultCache *Cache
+var DefaultCache *CacheOnDisk
+
+type Cache interface {
+	Set(key string, value string, expiration time.Duration) error
+	Get(key string) string
+}
 
 type expirableValue struct {
 	Value      string    `json:"value"`
 	Expiration time.Time `json:"expiration"`
 }
 
-type Cache struct {
+type CacheOnDisk struct {
 	name            string
 	location        string
 	kv              map[string]expirableValue
@@ -28,14 +33,16 @@ type Cache struct {
 	createCacheOnce sync.Once
 }
 
+var _ Cache = &CacheOnDisk{}
+
 // New instanciate a new cache object.
 // The encryptionKey parameter is here for obscurity purpose.
-func New(applicationName, name string, encryptionKey []byte) (*Cache, error) {
+func New(applicationName, name string, encryptionKey []byte) (*CacheOnDisk, error) {
 	if len(encryptionKey) == 0 {
 		encryptionKey = []byte("Dy8ANW03Zz9e=9Ra")
 	}
 
-	c := &Cache{
+	c := &CacheOnDisk{
 		name:          name,
 		encryptionKey: encryptionKey,
 	}
@@ -52,13 +59,13 @@ func New(applicationName, name string, encryptionKey []byte) (*Cache, error) {
 	return c, err
 }
 
-func (c *Cache) Set(key string, value string, expiration time.Duration) error {
+func (c *CacheOnDisk) Set(key string, value string, expiration time.Duration) error {
 	c.kv[key] = expirableValue{value, time.Now().Add(expiration)}
 
 	return c.write(c.kv)
 }
 
-func (c *Cache) Get(key string) string {
+func (c *CacheOnDisk) Get(key string) string {
 	ev, ok := c.kv[key]
 	if !ok {
 		return ""
@@ -73,7 +80,7 @@ func (c *Cache) Get(key string) string {
 	return ev.Value
 }
 
-func (c *Cache) read() (map[string]expirableValue, error) {
+func (c *CacheOnDisk) read() (map[string]expirableValue, error) {
 	logging.Debugf("reading cache %s", c.name)
 
 	if c.location == "" {
@@ -92,7 +99,7 @@ func (c *Cache) read() (map[string]expirableValue, error) {
 
 	data := make(map[string]expirableValue)
 
-	json.Unmarshal(plaintext, &data)
+	err = json.Unmarshal(plaintext, &data)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +107,7 @@ func (c *Cache) read() (map[string]expirableValue, error) {
 	return data, nil
 }
 
-func (c *Cache) write(data map[string]expirableValue) error {
+func (c *CacheOnDisk) write(data map[string]expirableValue) error {
 	var err error
 
 	c.createCacheOnce.Do(func() {

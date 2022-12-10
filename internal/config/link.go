@@ -2,9 +2,7 @@ package config
 
 import (
 	"bufio"
-	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -25,8 +23,12 @@ type Link struct {
 	CanonicalDomain string `json:"canonical_domain,omitempty"`
 }
 
-func NewLink() (*Link, error) {
-	link := &Link{location: path.Join(".owh.json")}
+type LinkFactory func(isInteractive bool) (*Link, error)
+
+var _ LinkFactory = EnsureLink
+
+func EnsureLink(isInteractive bool) (*Link, error) {
+	link := &Link{location: ".owh.json"}
 
 	err := fromFile(link, link.location)
 	if err != nil {
@@ -42,26 +44,11 @@ func NewLink() (*Link, error) {
 	}
 
 	if link.Hosting == "" || link.CanonicalDomain == "" {
-		return link, ErrFolderNotLinked
-	}
-
-	return link, nil
-}
-
-// EnsureLink retrieve a Link from environment variables and config file.
-func EnsureLink() (*Link, error) {
-	link, err := NewLink()
-	if err != nil {
-		if err == ErrFolderNotLinked {
-			if cmdutil.IsInteractive() {
-				fmt.Println("Directory not linked. Please run: owh link")
-			} else {
-				fmt.Printf("Please set the %s and %s environment variables\n", ENV_OWH_HOSTING, ENV_OWH_CANONICAL_DOMAIN)
-			}
-			return nil, cmdutil.ErrSilent
+		if isInteractive {
+			return link, xerrors.Errorf("%w. Please run: owh link", ErrFolderNotLinked)
 		}
 
-		return link, err
+		return link, xerrors.Errorf("%w. Please set the %s and %s environment variables", ErrFolderNotLinked, ENV_OWH_HOSTING, ENV_OWH_CANONICAL_DOMAIN)
 	}
 
 	return link, nil

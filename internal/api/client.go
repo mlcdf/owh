@@ -3,11 +3,10 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/ovh/go-ovh/ovh"
-	"go.mlcdf.fr/owh/internal/cmdutil"
-	"go.mlcdf.fr/owh/internal/config"
 	"golang.org/x/xerrors"
 )
 
@@ -16,43 +15,32 @@ const applicationSecret = "13eb34fe75e863d12f97ec62124db9c7"
 
 const defaultTimeout = 30 * time.Second
 
+type ClientFactory func(httpClient *http.Client, region string, consumerKey string) (*Client, error)
+
 type Client struct {
 	*ovh.Client
 }
 
-// UnloggedClient is a client without the consumer key.
-// It should only be used for the login flow.
-func NewUnloggedClient(region string) (*Client, error) {
+var _ ClientFactory = NewClient
+
+func NewClient(httpClient *http.Client, region string, consumerKey string) (*Client, error) {
 	client, err := ovh.NewClient(
 		region,
 		applicationKey,
 		applicationSecret,
-		"",
+		consumerKey,
 	)
-
-	client.UserAgent = "owh"
-	client.Timeout = defaultTimeout
 
 	if err != nil {
 		return nil, xerrors.Errorf("failed to instantiate a new ovh Client: %w", err)
 	}
 
-	return &Client{client}, nil
-}
-
-func NewClient(region string) (*Client, error) {
-	client, err := ovh.NewClient(
-		region,
-		applicationKey,
-		applicationSecret,
-		config.GlobalOpts.ConsumerKey,
-	)
-
+	client.Client = httpClient
 	client.UserAgent = "owh"
 	client.Timeout = defaultTimeout
 
-	if err != nil {
-		return nil, xerrors.Errorf("failed to instantiate a new ovh Client: %w", err)
+	if consumerKey == "" {
+		return &Client{client}, nil
 	}
 
 	apiCredentials := &credentials{}
@@ -65,8 +53,7 @@ func NewClient(region string) (*Client, error) {
 	var e *ovh.APIError
 	if errors.As(err, &e) {
 		if e.Code == 403 && e.Message == "This credential is not valid" {
-			fmt.Println("Current OVHcloud API token is invalid or expired. Please run: owh login")
-			return nil, cmdutil.ErrSilent
+			return nil, fmt.Errorf("Current OVHcloud API token is invalid or expired. Please run: owh login")
 		}
 	}
 

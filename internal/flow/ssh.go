@@ -11,27 +11,28 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"go.mlcdf.fr/owh/internal/api"
 	"go.mlcdf.fr/owh/internal/cmdutil"
-	"go.mlcdf.fr/owh/internal/config"
-	"go.mlcdf.fr/sally/logging"
-	"golang.org/x/crypto/ssh"
+	"go.mlcdf.fr/owh/internal/view"
+
+	cfg "go.mlcdf.fr/owh/internal/config"
+	"go.mlcdf.fr/owh/internal/remote"
 	"golang.org/x/xerrors"
 )
 
-func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
+func NewSSHClient(client *api.Client, config *cfg.Config, view *view.View, isInteractive bool, hosting string) (*remote.Client, error) {
 	hostingInfo, err := client.GetHosting(hosting)
 	if err != nil {
 		return nil, err
 	}
 
-	credentials, ok := config.GlobalOpts.SFTPCredentials[hosting]
+	credentials, ok := config.SFTPCredentials[hosting]
 	if !ok {
-		credentials = &config.Credentials{}
+		credentials = &cfg.Credentials{}
 
-		if password := os.Getenv(config.ENV_SSH_PASSWORD); password != "" {
+		if password := os.Getenv(cfg.ENV_SSH_PASSWORD); password != "" {
 			credentials.Password = password
 		}
 
-		if user := os.Getenv(config.ENV_SSH_USER); user != "" {
+		if user := os.Getenv(cfg.ENV_SSH_USER); user != "" {
 			credentials.User = user
 		} else {
 			credentials.User = hostingInfo.PrimaryLogin
@@ -39,7 +40,7 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 	}
 
 	if credentials.Password == "" {
-		if !cmdutil.IsInteractive() {
+		if !isInteractive {
 			fmt.Println("No SSH credentials found in config or environnement variable.")
 			return nil, cmdutil.ErrSilent
 		}
@@ -61,7 +62,7 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 
 		switch input {
 		case OPTION_CREATE_NEW_USER:
-			credentials, err = createSSHUser(client, hostingInfo.PrimaryLogin, hosting)
+			credentials, err = createSSHUser(client, view, config, hostingInfo.PrimaryLogin, hosting)
 			if err != nil {
 				return nil, err
 			}
@@ -80,7 +81,7 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 				return nil, err
 			}
 
-			err = ChangePassword(client, hosting, user, "")
+			err = ChangePassword(client, config, hosting, user, "")
 			if err != nil {
 				return nil, err
 			}
@@ -92,37 +93,23 @@ func NewSSHClient(client *api.Client, hosting string) (*ssh.Client, error) {
 		}
 	}
 
-	config := ssh.ClientConfig{
-		Config:          ssh.Config{},
-		User:            credentials.User,
-		Auth:            []ssh.AuthMethod{ssh.Password(credentials.Password)},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         10 * time.Second,
-	}
-
-	addr := fmt.Sprintf("%s:%d", hostingInfo.ServiceManagementAccess.SSH.URL, hostingInfo.ServiceManagementAccess.SSH.Port)
-	logging.Debugf(
-		"ssh %s -l %s (passwd: %s)",
-		strings.ReplaceAll(addr, ":22", ""),
-		credentials.User, credentials.Password,
+	sshConfig := remote.NewPasswordConfig(
+		hostingInfo.ServiceManagementAccess.SSH.URL,
+		hostingInfo.ServiceManagementAccess.SSH.Port,
+		credentials.User,
+		credentials.Password,
 	)
 
-	var conn *ssh.Client
+	conn, err := remote.Connect(sshConfig)
 
-	conn, err = ssh.Dial("tcp", addr, &config)
 	if err != nil {
-		time.Sleep(5 * time.Second)
-
-		conn, err = ssh.Dial("tcp", addr, &config)
-		if err != nil {
-			return nil, xerrors.Errorf("failed to connect to [%s]: %w\n", addr, err)
-		}
+		return nil, err
 	}
 
 	return conn, nil
 }
 
-func createSSHUser(client *api.Client, primaryLogin string, hosting string) (*config.Credentials, error) {
+func createSSHUser(client *api.Client, view *view.View, config *cfg.Config, primaryLogin string, hosting string) (*cfg.Credentials, error) {
 	login := fmt.Sprintf("%s-owh", primaryLogin)
 	prompt := &survey.Input{
 		Message: "SSH user",
@@ -151,7 +138,7 @@ func createSSHUser(client *api.Client, primaryLogin string, hosting string) (*co
 		return nil, xerrors.Errorf("failed to create SSH user: %w", err)
 	}
 
-	err = client.WaitTaskDone(hosting, task.ID, fmt.Sprintf("Creating SSH user %s", login))
+	err = WaitTaskDone(client, view, hosting, task.ID, fmt.Sprintf("Creating SSH user %s", login))
 	if err != nil {
 		var response interface{}
 		err := client.Get(url, response)
@@ -160,10 +147,10 @@ func createSSHUser(client *api.Client, primaryLogin string, hosting string) (*co
 		}
 	}
 
-	credentials := &config.Credentials{User: login, Password: password}
-	config.GlobalOpts.SFTPCredentials[hosting] = credentials
+	credentials := &cfg.Credentials{User: login, Password: password}
+	config.SFTPCredentials[hosting] = credentials
 
-	return credentials, config.GlobalOpts.Save()
+	return credentials, config.Save()
 }
 
 func GenPassword() string {
@@ -201,7 +188,7 @@ func validatePassword(password string) bool {
 	return true
 }
 
-func ChangePassword(client *api.Client, hosting string, user string, password string) error {
+func ChangePassword(client *api.Client, conf *cfg.Config, hosting string, user string, password string) error {
 	if password == "" {
 		prompt := &survey.Input{
 			Message: "Password (alphanumeric characters only, leave blank to use an auto-generated password)",
@@ -227,13 +214,13 @@ func ChangePassword(client *api.Client, hosting string, user string, password st
 		}
 	}
 
-	err := client.ChangePassword(hosting, user, password)
+	_, err := client.ChangePassword(hosting, user, password)
 	if err != nil {
 		return err
 	}
 
-	config.GlobalOpts.SFTPCredentials[hosting] = &config.Credentials{User: user, Password: password}
-	err = config.GlobalOpts.Save()
+	conf.SFTPCredentials[hosting] = &cfg.Credentials{User: user, Password: password}
+	err = conf.Save()
 	if err != nil {
 		return err
 	}
