@@ -21,3 +21,7 @@ linters:
   - gomnd
   - gochecknoglobals
   - gosec
+  - noctx
+  - paralleltest
+  - testpackage
+  - wrapcheck # for now
