@@ -5,6 +5,8 @@ import (
 )
 
 func TestSkipFile(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		path string
