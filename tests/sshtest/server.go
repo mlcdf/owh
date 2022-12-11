@@ -7,8 +7,6 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
-
-	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -17,8 +15,6 @@ const (
 	password = "test"
 	Port     = 2222
 )
-
-var pk ssh.Signer
 
 type containerID struct {
 	id string

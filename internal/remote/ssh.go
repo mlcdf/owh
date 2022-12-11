@@ -155,42 +155,44 @@ func (c *Client) Sync(src string, dest string) error {
 	}
 
 	// Create new files
-	_fs := os.DirFS(src)
-	return fs.WalkDir(_fs, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if path == "." {
+	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+		if path == src {
 			return nil
 		}
 
-		logging.Debugf(path)
+		if err != nil {
+			return xerrors.Errorf("error walking %s path %s: %w", src, path, err)
+		}
+
+		logging.Debugf("path: %s", path)
 
 		if skipFile(path) {
 			logging.Debugf("Path %s skipped", path)
 			return nil
 		}
 
-		localpath := filepath.Join(src, path)
-
-		remotepath := filepath.Join(dest, path)
-
-		localfile, err := os.Stat(localpath)
+		relpath, err := filepath.Rel(src, path)
 		if err != nil {
-			return xerrors.Errorf("error while stat %s: %w", localpath, err)
+			return err
+		}
+
+		remotepath := filepath.Join(dest, relpath)
+
+		localfile, err := os.Stat(path)
+		if err != nil {
+			return xerrors.Errorf("error while stat %s: %w", path, err)
 		}
 
 		if localfile.IsDir() {
 			if err := client.MkdirAll(remotepath); err != nil {
-				return err
+				return xerrors.Errorf("error while mkdir %s on remote: %w", remotepath, err)
 			}
 			return nil
 		}
 
 		logging.Debugf(path)
 
-		return createFile(client, localpath, remotepath)
+		return createFile(client, path, remotepath)
 	})
 }
 
@@ -213,7 +215,10 @@ func (c *Client) Run(cmd string) (string, error) {
 // ForceRemove performs a rm -rf of the dest.
 func (c *Client) ForceRemove(dest string) error {
 	_, err := c.Run(fmt.Sprintf("rm -rf %s", dest))
-	return xerrors.Errorf("failed to force remove: %w", err)
+	if err != nil {
+		xerrors.Errorf("failed to force remove: %w", err)
+	}
+	return nil
 }
 
 func isIdentical(client *sftp.Client, path1, path2 string) (bool, error) {
