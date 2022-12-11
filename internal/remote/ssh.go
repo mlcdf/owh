@@ -1,13 +1,13 @@
 package remote
 
 import (
-	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,7 +77,7 @@ func (c *Client) Sync(src string, dest string) error {
 	}
 
 	if dest == "" {
-		return ErrEmptyStringSrc
+		return ErrEmptyStringDest
 	}
 
 	client, err := sftp.NewClient(c.conn)
@@ -201,21 +201,19 @@ func (c *Client) Run(cmd string) (string, error) {
 	}
 	defer session.Close()
 
-	var b bytes.Buffer
-	session.Stdout = &b
-
-	err = session.Run(cmd)
+	output, err := session.CombinedOutput(cmd)
 	if err != nil {
-		return "", xerrors.Errorf("failed to run command: %s : %w", b.String(), err)
+		log.Println(string(output))
+		return "", xerrors.Errorf("failed to run command %s: %w", cmd, err)
 	}
 
-	return b.String(), nil
+	return string(output), nil
 }
 
 // ForceRemove performs a rm -rf of the dest.
 func (c *Client) ForceRemove(dest string) error {
 	_, err := c.Run(fmt.Sprintf("rm -rf %s", dest))
-	return err
+	return xerrors.Errorf("failed to force remove: %w", err)
 }
 
 func isIdentical(client *sftp.Client, path1, path2 string) (bool, error) {
