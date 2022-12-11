@@ -127,6 +127,7 @@ github.com/spf13/cast
 # github.com/stretchr/testify v1.8.1
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # go.mlcdf.fr/sally v0.0.0-20221209000117-7c38155fbe00
 ## explicit; go 1.18
 go.mlcdf.fr/sally/cache
