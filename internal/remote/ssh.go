@@ -216,7 +216,7 @@ func (c *Client) Run(cmd string) (string, error) {
 func (c *Client) ForceRemove(dest string) error {
 	_, err := c.Run(fmt.Sprintf("rm -rf %s", dest))
 	if err != nil {
-		xerrors.Errorf("failed to force remove: %w", err)
+		return xerrors.Errorf("failed to force remove: %w", err)
 	}
 	return nil
 }
