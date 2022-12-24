@@ -203,7 +203,7 @@ func (c *check) checkEnforceHTTPS(domain string) {
 func (c *check) checkProtocol(domain string) {
 	defer c.wg.Done()
 
-	res, err := http.Get("https://" + domain)
+	res, err := c.httpClient.Get("https://" + domain)
 	if err != nil {
 		c.protocol = err.Error()
 		return
