@@ -99,6 +99,7 @@ func localtree(t *testing.T, arg string) string {
 	cmd.Dir = wd
 
 	output, err := cmd.CombinedOutput()
+	t.Log(string(output))
 	require.NoError(t, err)
 
 	// clean output
