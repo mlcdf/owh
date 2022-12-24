@@ -101,7 +101,7 @@ func (c *LogsCommand) Run(args []string) int {
 		browser.Stderr = io.Discard // hide gtk logs on Linux
 		err = browser.OpenURL(url)
 	default:
-		err = lastLogs(hostingInfo, token)
+		err = lastLogs(c.HTTPClient, hostingInfo, token)
 	}
 
 	if err != nil {
@@ -111,7 +111,7 @@ func (c *LogsCommand) Run(args []string) int {
 	return 0
 }
 
-func lastLogs(hosting *api.HostingInfo, token string) error {
+func lastLogs(httpClient *http.Client, hosting *api.HostingInfo, token string) error {
 	today := time.Now()
 
 	url := fmt.Sprintf(
@@ -132,7 +132,7 @@ func lastLogs(hosting *api.HostingInfo, token string) error {
 
 	req.AddCookie(&http.Cookie{Name: "token", Value: token})
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
