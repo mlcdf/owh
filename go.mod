@@ -15,7 +15,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/sftp v1.13.5
 	github.com/stretchr/testify v1.8.1
-	go.mlcdf.fr/sally v0.0.0-20221209000117-7c38155fbe00
+	go.mlcdf.fr/sally v0.0.0-20221224150324-a5c10b069b2a
 	golang.org/x/crypto v0.4.0
 	golang.org/x/exp v0.0.0-20221208152030-732eee02a75a
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2

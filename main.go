@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"go.mlcdf.fr/owh/internal/config"
 	"go.mlcdf.fr/owh/internal/view"
 	"go.mlcdf.fr/sally/cache"
+	"go.mlcdf.fr/sally/logging"
 
 	"github.com/mattn/go-isatty"
 	"github.com/mitchellh/cli"
@@ -81,6 +83,13 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	var debug bool = true
+	flag.BoolVar(&debug, "debug", false, "debug")
+
+	if debug {
+		logging.SetLevel(logging.DEBUG)
 	}
 
 	cli := cli.CLI{

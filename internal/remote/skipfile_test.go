@@ -5,6 +5,8 @@ import (
 )
 
 func TestSkipFile(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		path string
@@ -39,6 +41,8 @@ func TestSkipFile(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
 			if got := skipFile(test.path); got != test.want {
 				t.Errorf("want skipFile=%t, got %t for %s", got, test.want, test.path)
 			}
