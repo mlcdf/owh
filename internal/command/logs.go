@@ -24,6 +24,10 @@ func (c *LogsCommand) Help() string {
 Usage: owh logs
 
   View access logs.
+
+Options:
+  --owstats        open OVHcloud Web Statistics
+  --homepage       open the logs homepage
 `
 	return strings.TrimSpace(helpText)
 }
@@ -71,7 +75,7 @@ func (c *LogsCommand) Run(args []string) int {
 	if token == "" {
 		validity := 1 * time.Hour
 
-		token, err := client.GetUserLogsToken(hosting, validity)
+		token, err = client.GetUserLogsToken(hosting, validity)
 		if err != nil {
 			return c.View.PrintErr(err)
 		}
@@ -133,6 +137,8 @@ func lastLogs(hosting *api.HostingInfo, token string) error {
 		return err
 	}
 	defer res.Body.Close()
+
+	fmt.Println(res.Request.URL)
 
 	logs, err := io.ReadAll(res.Body)
 	if err != nil {

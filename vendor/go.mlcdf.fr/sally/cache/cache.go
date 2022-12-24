@@ -31,6 +31,7 @@ type CacheOnDisk struct {
 	kv              map[string]expirableValue
 	encryptionKey   []byte
 	createCacheOnce sync.Once
+	readCacheOnce   sync.Once
 }
 
 var _ Cache = &CacheOnDisk{}
@@ -60,12 +61,32 @@ func New(applicationName, name string, encryptionKey []byte) (*CacheOnDisk, erro
 }
 
 func (c *CacheOnDisk) Set(key string, value string, expiration time.Duration) error {
+	var err error
+
+	if c.kv == nil {
+		c.kv, err = c.read()
+		if err != nil {
+			return err
+		}
+
+	}
+
 	c.kv[key] = expirableValue{value, time.Now().Add(expiration)}
 
 	return c.write(c.kv)
 }
 
 func (c *CacheOnDisk) Get(key string) string {
+	var err error
+
+	c.readCacheOnce.Do(func() {
+		c.kv, err = c.read()
+	})
+
+	if err != nil {
+		return ""
+	}
+
 	ev, ok := c.kv[key]
 	if !ok {
 		return ""
@@ -88,6 +109,10 @@ func (c *CacheOnDisk) read() (map[string]expirableValue, error) {
 	}
 
 	ciphertext, err := os.ReadFile(c.location)
+	if os.IsNotExist(err) {
+		return make(map[string]expirableValue), nil
+	}
+
 	if err != nil {
 		return nil, xerrors.Errorf("failed to read file %s: %w", c.location, err)
 	}
