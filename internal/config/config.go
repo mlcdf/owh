@@ -18,55 +18,10 @@ const ENV_CONSUMER_KEY = ENV_PREFIX + "CONSUMER_KEY"
 const ENV_SSH_USER = ENV_PREFIX + "SSH_USER"
 const ENV_SSH_PASSWORD = ENV_PREFIX + "SSH_PASSWORD"
 
-type cfg struct {
-	// config file location on disk
-	location string `json:"-"`
-}
-
-func (c *cfg) Save() error {
-	if c.location == "" {
-		// in testing
-		return nil
-	}
-
-	var fh *os.File
-
-	if _, err := os.Stat(c.location); os.IsNotExist(err) {
-		if err := os.MkdirAll(path.Dir(c.location), 0600); err != nil {
-			return err
-		}
-
-		fh, err = os.Create(c.location)
-		if err != nil {
-			return err
-		}
-	} else {
-		fh, err = os.OpenFile(c.location, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-		if err != nil {
-			return err
-		}
-	}
-
-	defer fh.Close()
-
-	bytes, err := json.MarshalIndent(&c, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to encode json: %w", err)
-	}
-
-	_, err = fh.Write(bytes)
-	if err != nil {
-		return fmt.Errorf("failed to write to file %s: %w", c.location, err)
-	}
-
-	logging.Infof("config saved")
-	return nil
-}
-
 type Factory func(isInteractive bool) (*Config, error)
 
 type Config struct {
-	cfg
+	location string `json:"-"`
 
 	Region          string                  `json:"region,omitempty"`
 	ConsumerKey     string                  `json:"consumer_key,omitempty"`
@@ -86,7 +41,7 @@ func New(isInteractive bool) (*Config, error) {
 		return nil, err
 	}
 
-	config := &Config{cfg: cfg{location: location}}
+	config := &Config{location: location}
 
 	err = fromFile(config, location)
 	if err != nil {
@@ -101,7 +56,7 @@ func New(isInteractive bool) (*Config, error) {
 	return config, nil
 }
 
-func (config *Config) Validate() error {
+func (config *Config) IsValid() error {
 	if config.Region == "" || config.ConsumerKey == "" {
 		if ci := os.Getenv("CI"); ci != "" {
 			fmt.Printf("To use owh in automation, set the %s environment variable.\n", ENV_CONSUMER_KEY)
@@ -163,6 +118,15 @@ func fromFile[Options *Config | *Link](opts Options, location string) error {
 		return cmdutil.ErrSilent
 	}
 	return nil
+}
+
+func (config *Config) Save() error {
+	if config.location == "" {
+		// in testing
+		return nil
+	}
+
+	return save(config)
 }
 
 func save[Options *Config | *Link](opts Options) error {
