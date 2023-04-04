@@ -85,7 +85,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var debug bool = true
+	var debug bool
 	flag.BoolVar(&debug, "debug", false, "debug")
 
 	if debug {

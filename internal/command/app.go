@@ -23,5 +23,9 @@ func (app *App) EnsureLink() (*config.Link, error) {
 }
 
 func (app *App) LoggedClient() (*api.Client, error) {
+	if err := app.Config.IsValid(); err != nil {
+		return nil, err
+	}
+
 	return app.APIClientFactory(app.HTTPClient, app.Config.Region, app.Config.ConsumerKey)
 }
