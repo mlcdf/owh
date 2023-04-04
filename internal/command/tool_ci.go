@@ -46,10 +46,10 @@ func (c *CICommand) Run(args []string) int {
 	}
 
 	fmt.Printf(`# Define these 2 secrets in your CI
-# OVH_HOSTING_PASSWORD = %s
 # OVH_HOSTING_USER = %s
+# OVH_HOSTING_PASSWORD = %s
 
-sshpass -p "$OVH_HOSTING_PASSWORD" rsync -av --exclude '.*' --exclude 'LICENSE' -e "ssh -o StrictHostKeyChecking=no" . $OVH_HOSTING_USER@$%s:~/%s
+sshpass -p "$OVH_HOSTING_PASSWORD" rsync -av --exclude '.*' --exclude 'LICENSE' -e "ssh -o StrictHostKeyChecking=no" . $OVH_HOSTING_USER@%s:~/%s
 `,
 		credentials.User,
 		credentials.Password,
