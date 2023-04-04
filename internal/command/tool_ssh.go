@@ -40,6 +40,7 @@ func (c *SSHCommand) Run(_ []string) int {
 
 	credentials, ok := c.Config.SFTPCredentials[link.Hosting]
 	if !ok {
+		c.View.Println("Couldn't find credentials for", link.Hosting)
 		return 1
 	}
 
